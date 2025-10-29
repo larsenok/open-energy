@@ -8,11 +8,17 @@ const tooltipMix = document.getElementById('tooltip-mix');
 const tooltipChart = document.getElementById('tooltip-chart');
 const tooltipFootnote = document.getElementById('tooltip-footnote');
 const tooltipClose = document.getElementById('tooltip-close');
+const tooltipInsights = document.getElementById('tooltip-insights');
+const tooltipInsightsList = document.getElementById('tooltip-insights-list');
+const tooltipInsightsNote = document.getElementById('tooltip-insights-note');
 
 let activeRegionId = null;
 let regions = [];
 let animationFrame = null;
 const BREATHING_SPEED = 4000;
+const OPEN_DATA_TIMEOUT = 5500;
+
+const insightsCache = new Map();
 
 fetch('data/energy.json')
   .then((response) => {
@@ -37,6 +43,7 @@ fetch('data/energy.json')
 tooltipClose.addEventListener('click', () => {
   activeRegionId = null;
   tooltipEl.hidden = true;
+  resetTooltipInsights();
   for (const element of mapEl.querySelectorAll('.region')) {
     element.dataset.state = '';
   }
@@ -58,7 +65,7 @@ function renderRegions() {
 
     element.addEventListener('mouseenter', () => {
       if (activeRegionId) return;
-      showTooltip(region, element, false);
+      showTooltip(region, element);
     });
 
     element.addEventListener('mouseleave', () => {
@@ -71,6 +78,7 @@ function renderRegions() {
       if (activeRegionId === region.regionId) {
         activeRegionId = null;
         tooltipEl.hidden = true;
+        resetTooltipInsights();
         element.dataset.state = '';
         return;
       }
@@ -78,7 +86,7 @@ function renderRegions() {
       for (const other of mapEl.querySelectorAll('.region')) {
         other.dataset.state = other === element ? 'active' : '';
       }
-      showTooltip(region, element, true);
+      showTooltip(region, element);
     });
 
     mapEl.append(element);
@@ -123,14 +131,14 @@ function startAnimation() {
   tick();
 }
 
-function showTooltip(region, element, frozen) {
+function showTooltip(region, element) {
   tooltipTitle.textContent = region.regionName;
 
   const balance = region.generationMw - region.consumptionMw;
   const status = balance >= 0 ? 'surplus' : 'deficit';
   const balanceMagnitude = Math.abs(balance).toLocaleString();
   const prefix = balance >= 0 ? 'Surplus' : 'Deficit';
-  tooltipBalance.textContent = `${prefix} of ${balanceMagnitude} MW`; 
+  tooltipBalance.textContent = `${prefix} of ${balanceMagnitude} MW`;
 
   tooltipMix.textContent = '';
   for (const [key, value] of Object.entries(region.mix)) {
@@ -144,13 +152,13 @@ function showTooltip(region, element, frozen) {
   tooltipFootnote.textContent = `Carbon intensity: ${region.carbonIntensity} gCO₂/kWh · Renewable share ${(region.renewableShare * 100).toFixed(0)}%`;
 
   renderHistoryChart(region.history, status);
+  prepareTooltipInsights(region);
 
   tooltipEl.hidden = false;
   const rect = element.getBoundingClientRect();
   tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
   tooltipEl.style.top = `${rect.top - 12}px`;
   tooltipEl.style.transform = 'translate(-50%, -100%)';
-  tooltipEl.dataset.state = frozen ? 'frozen' : '';
 }
 
 function renderHistoryChart(history, status) {
@@ -225,5 +233,166 @@ function longitudeToPercent(lon) {
 }
 
 function latitudeToPercent(lat) {
-  return ((90 - lat) / 180) * 100;
+  const clamped = Math.max(-85, Math.min(85, lat));
+  const latRad = (clamped * Math.PI) / 180;
+  const mercator = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+  const normalized = (1 - mercator / Math.PI) / 2;
+  return Math.min(100, Math.max(0, normalized * 100));
+}
+
+function resetTooltipInsights() {
+  tooltipInsights.hidden = true;
+  tooltipInsights.classList.remove('loading', 'error');
+  tooltipInsightsList.textContent = '';
+  tooltipInsightsNote.textContent = '';
+}
+
+function prepareTooltipInsights(region) {
+  const cached = insightsCache.get(region.regionId);
+  resetTooltipInsights();
+  tooltipInsights.hidden = false;
+  tooltipInsights.classList.add('loading');
+  const placeholder = document.createElement('li');
+  placeholder.innerHTML = '<span class="label">Loading open data…</span>';
+  tooltipInsightsList.append(placeholder);
+
+  if (cached) {
+    renderTooltipInsights(cached);
+    return;
+  }
+
+  fetchLiveIndicators(region)
+    .then((data) => {
+      insightsCache.set(region.regionId, data);
+      renderTooltipInsights(data);
+    })
+    .catch((error) => {
+      tooltipInsights.classList.remove('loading');
+      tooltipInsights.classList.add('error');
+      tooltipInsightsList.textContent = '';
+      const message = document.createElement('li');
+      message.innerHTML = '<span class="label">Live indicators unavailable</span>';
+      tooltipInsightsList.append(message);
+      tooltipInsightsNote.textContent = 'Showing generated grid metrics while open data is unreachable.';
+      console.error('Unable to load open data for region', region.regionId, error);
+    });
+}
+
+function renderTooltipInsights(data) {
+  tooltipInsights.classList.remove('loading', 'error');
+  tooltipInsightsList.textContent = '';
+
+  data.entries.forEach((entry) => {
+    const item = document.createElement('li');
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = entry.label;
+    const value = document.createElement('span');
+    value.className = 'value';
+    value.textContent = entry.value;
+    item.append(label, value);
+    tooltipInsightsList.append(item);
+  });
+
+  if (!data.entries.length) {
+    const empty = document.createElement('li');
+    empty.innerHTML = '<span class="label">No supporting data available</span>';
+    tooltipInsightsList.append(empty);
+    tooltipInsightsNote.textContent = 'Open datasets did not return contextual readings for this region.';
+    return;
+  }
+
+  tooltipInsightsNote.textContent = `Powered by ${data.sources.join(' • ')}`;
+}
+
+async function fetchLiveIndicators(region) {
+  const [lon, lat] = region.coordinates;
+  const meteoUrl = new URL('https://api.open-meteo.com/v1/forecast');
+  meteoUrl.searchParams.set('latitude', lat.toFixed(4));
+  meteoUrl.searchParams.set('longitude', lon.toFixed(4));
+  meteoUrl.searchParams.set('current', 'temperature_2m,wind_speed_10m,solar_radiation');
+  meteoUrl.searchParams.set('hourly', 'direct_radiation');
+  meteoUrl.searchParams.set('forecast_days', '1');
+  meteoUrl.searchParams.set('timezone', 'UTC');
+
+  const airUrl = new URL('https://api.openaq.org/v2/latest');
+  airUrl.searchParams.set('coordinates', `${lat.toFixed(4)},${lon.toFixed(4)}`);
+  airUrl.searchParams.set('radius', '100000');
+  airUrl.searchParams.set('limit', '1');
+  airUrl.searchParams.set('order_by', 'datetime');
+  airUrl.searchParams.set('sort', 'desc');
+  airUrl.searchParams.set('parameter', 'pm25');
+
+  const emissionsUrl = new URL('https://api.emissions-api.org/api/v2/carbonmonoxide/average.json');
+  emissionsUrl.searchParams.set('point', `${lon.toFixed(4)},${lat.toFixed(4)}`);
+  emissionsUrl.searchParams.set('limit', '1');
+
+  const [meteo, air, emissions] = await Promise.allSettled([
+    fetchJson(meteoUrl, OPEN_DATA_TIMEOUT),
+    fetchJson(airUrl, OPEN_DATA_TIMEOUT),
+    fetchJson(emissionsUrl, OPEN_DATA_TIMEOUT)
+  ]);
+
+  const entries = [];
+  const sources = new Set();
+
+  if (meteo.status === 'fulfilled') {
+    const before = entries.length;
+    const { current, hourly } = meteo.value ?? {};
+    if (current) {
+      if (typeof current.temperature_2m === 'number') {
+        entries.push({ label: 'Air temperature', value: `${Math.round(current.temperature_2m)}°C` });
+      }
+      if (typeof current.wind_speed_10m === 'number') {
+        entries.push({ label: 'Wind speed', value: `${current.wind_speed_10m.toFixed(1)} m/s` });
+      }
+      if (typeof current.solar_radiation === 'number') {
+        entries.push({ label: 'Solar radiation', value: `${Math.round(current.solar_radiation)} W/m²` });
+      }
+    }
+    if (hourly && Array.isArray(hourly.direct_radiation) && hourly.direct_radiation.length) {
+      const recent = hourly.direct_radiation[hourly.direct_radiation.length - 1];
+      if (typeof recent === 'number') {
+        entries.push({ label: 'Direct irradiance', value: `${Math.round(recent)} W/m²` });
+      }
+    }
+    if (entries.length > before) {
+      sources.add('Open-Meteo');
+    }
+  }
+
+  if (air.status === 'fulfilled') {
+    const result = air.value?.results?.[0];
+    const measurement = result?.measurements?.find((m) => typeof m.value === 'number');
+    if (measurement) {
+      const unit = measurement.unit ?? 'µg/m³';
+      entries.push({ label: 'PM₂.₅ concentration', value: `${measurement.value.toFixed(1)} ${unit}` });
+      sources.add('OpenAQ');
+    }
+  }
+
+  if (emissions.status === 'fulfilled') {
+    const record = Array.isArray(emissions.value) ? emissions.value[0] : null;
+    const average = record && typeof record.average === 'number' ? record.average : record && typeof record.value === 'number' ? record.value : null;
+    if (typeof average === 'number') {
+      entries.push({ label: 'CO column density', value: `${average.toFixed(3)} mol/m²` });
+      sources.add('Emissions API');
+    }
+  }
+
+  return { entries, sources: Array.from(sources) };
+}
+
+async function fetchJson(url, timeout) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Request failed with ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(id);
+  }
 }
