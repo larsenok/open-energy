@@ -55,8 +55,13 @@ function renderRegions() {
     const element = document.createElement('button');
     element.type = 'button';
     element.className = 'region';
-    element.style.left = `${longitudeToPercent(region.coordinates[0])}%`;
-    element.style.top = `${latitudeToPercent(region.coordinates[1])}%`;
+    if (Array.isArray(region.mapPosition) && region.mapPosition.length === 2) {
+      element.style.left = `${region.mapPosition[0]}%`;
+      element.style.top = `${region.mapPosition[1]}%`;
+    } else {
+      element.style.left = '50%';
+      element.style.top = '50%';
+    }
     element.setAttribute('aria-label', `${region.regionName} energy pulse`);
 
     const core = document.createElement('span');
@@ -226,16 +231,6 @@ function renderHistoryChart(history, status) {
   svg.insertBefore(defs, svg.firstChild);
 
   tooltipChart.append(svg);
-}
-
-function longitudeToPercent(lon) {
-  return ((lon + 180) / 360) * 100;
-}
-
-function latitudeToPercent(lat) {
-  const clamped = Math.max(-90, Math.min(90, lat));
-  const normalized = (90 - clamped) / 180;
-  return normalized * 100;
 }
 
 function resetTooltipInsights() {
