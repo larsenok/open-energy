@@ -233,11 +233,9 @@ function longitudeToPercent(lon) {
 }
 
 function latitudeToPercent(lat) {
-  const clamped = Math.max(-85, Math.min(85, lat));
-  const latRad = (clamped * Math.PI) / 180;
-  const mercator = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-  const normalized = (1 - mercator / Math.PI) / 2;
-  return Math.min(100, Math.max(0, normalized * 100));
+  const clamped = Math.max(-90, Math.min(90, lat));
+  const normalized = (90 - clamped) / 180;
+  return normalized * 100;
 }
 
 function resetTooltipInsights() {
