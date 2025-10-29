@@ -1,29 +1,10 @@
 {
-  "name": "human-energy-exchange",
-  "version": "0.1.0",
+  "name": "open-energy",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.51.3",
-    "d3": "^7.9.0",
-    "mapbox-gl": "^3.3.0",
-    "next": "^14.2.4",
-    "node-cache": "^5.1.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@types/mapbox-gl": "^3.0.7",
-    "@types/node": "^20.12.7",
-    "@types/react": "^18.2.73",
-    "@types/react-dom": "^18.2.19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.2.4",
-    "typescript": "^5.4.5"
+    "build": "node build.js",
+    "start": "node serve.js"
   }
 }

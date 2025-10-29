@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Human Energy Exchange</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="scene">
+      <div class="map" id="map"></div>
+      <aside class="overlay">
+        <header class="title-block">
+          <h1>Human Energy Exchange</h1>
+          <p>
+            A living portrait of the planet&apos;s electricity balance — regions expand with clean surplus
+            and glow warmer under strain.
+          </p>
+          <p class="status" id="status">Loading live grid signals…</p>
+          <p class="timestamp" id="timestamp"></p>
+        </header>
+        <section class="legend">
+          <h2>Legend</h2>
+          <ul>
+            <li><span class="swatch surplus"></span>Clean surplus</li>
+            <li><span class="swatch deficit"></span>Grid under strain</li>
+          </ul>
+        </section>
+      </aside>
+      <div class="tooltip" id="tooltip" hidden>
+        <button class="close" id="tooltip-close" aria-label="Close">×</button>
+        <h3 id="tooltip-title"></h3>
+        <p class="metric" id="tooltip-balance"></p>
+        <dl class="mix" id="tooltip-mix"></dl>
+        <div class="chart" id="tooltip-chart"></div>
+        <p class="footnote" id="tooltip-footnote"></p>
+      </div>
+    </main>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
