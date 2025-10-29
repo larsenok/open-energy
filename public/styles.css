@@ -35,14 +35,22 @@ body {
 .map {
   position: relative;
   border-radius: 24px;
-  background-image: radial-gradient(circle at center, rgba(45, 212, 191, 0.12), transparent 65%),
-    url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1000"%3E%3Cpath fill="rgba(148,163,184,0.22)" d="M1830 605l-30-10-20 30-40-20-20 20-10-20-30 20-40 10-10 40-50 10-30-30 10-30-30-10 10-40-40 20-10-30 20-10-30-10-40 10-50-20-40 20-20-20-40 10-30-20h-30l-20-20-40 20-40-10-10-40-30 20-40-10-10-20-30 20-40-30-20 20-20-30-50 10-20-10-10-50-30 10-20-30-30 30-30-20-40 40-20-30-30-10-30 20-30-20-40 0-20-40-20 10-20-40-40-10-20 10-10-30-30-10-40 30-10-20h-60l-20-40-30 10-30-20-30 10-10 20-40-20-20 20-40-20-30 30-40-30-60-10-30-30-20-40 10-30-10-40-30-20 10-40-30-20 10-40-40-20 10-40-20-40 20-20-30-30 10-50 40-20 20 0 20-40 40 0 10-20 40-10 30-40 30-10 10-20 50 0 20-20 30 10 20-20 30 10 10-20 20 0 10-30 30-10 30-30 40-10 20-30 30 0 10-20 30-10 40 0 30 20 40 10 20 30 30-10 30 30 10-20 30-10 50 20 10 40 40 10 40 30 30-30 50 10 30-20 20 0 30 20 50-10 10 20 40 10 40-10 20 20 30-20 20 10 20-10 20 30 40 0 20 20 20-20 50 20 10 20 50-10 10-20 50 20 20 30 50-10 20 30 40 0 20 40 40 20 10 40 30 20-10 40 40 30-20 20 40 30-10 50 30 10-20 50 30 30-20 20 10 30-20 40 10 30-40 20-20 30-30-10z"/%3E%3C/svg%3E');
-  background-size: 140% 140%, contain;
+  overflow: hidden;
+  aspect-ratio: 1400 / 1060;
+  width: 100%;
+  background-image: url('assets/map_1.png');
+  background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
-  overflow: hidden;
-  aspect-ratio: 2 / 1;
   box-shadow: inset 0 0 40px rgba(8, 47, 73, 0.45);
+}
+
+.map::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(45, 212, 191, 0.12), transparent 65%);
+  pointer-events: none;
 }
 
 .overlay {
