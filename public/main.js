@@ -15,6 +15,7 @@ const tooltipInsightsNote = document.getElementById('tooltip-insights-note');
 let activeRegionId = null;
 let regions = [];
 let animationFrame = null;
+let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
 const OPEN_DATA_TIMEOUT = 5500;
 
@@ -44,6 +45,7 @@ tooltipClose.addEventListener('click', () => {
   activeRegionId = null;
   tooltipEl.hidden = true;
   resetTooltipInsights();
+  tooltipAnchor = null;
   for (const element of mapEl.querySelectorAll('.region')) {
     element.dataset.state = '';
   }
@@ -76,6 +78,7 @@ function renderRegions() {
     element.addEventListener('mouseleave', () => {
       if (activeRegionId) return;
       tooltipEl.hidden = true;
+      tooltipAnchor = null;
       element.dataset.state = '';
     });
 
@@ -84,6 +87,7 @@ function renderRegions() {
         activeRegionId = null;
         tooltipEl.hidden = true;
         resetTooltipInsights();
+        tooltipAnchor = null;
         element.dataset.state = '';
         return;
       }
@@ -137,6 +141,7 @@ function startAnimation() {
 }
 
 function showTooltip(region, element) {
+  tooltipAnchor = element;
   tooltipTitle.textContent = region.regionName;
 
   const balance = region.generationMw - region.consumptionMw;
@@ -160,10 +165,46 @@ function showTooltip(region, element) {
   prepareTooltipInsights(region);
 
   tooltipEl.hidden = false;
+  positionTooltip(element);
+}
+
+function positionTooltip(element) {
+  if (!element) return;
   const rect = element.getBoundingClientRect();
-  tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
-  tooltipEl.style.top = `${rect.top - 12}px`;
-  tooltipEl.style.transform = 'translate(-50%, -100%)';
+  const viewportPadding = 16;
+  const tooltipWidth = tooltipEl.offsetWidth;
+  const tooltipHeight = tooltipEl.offsetHeight;
+  const maxLeft = window.innerWidth - viewportPadding - tooltipWidth / 2;
+  const minLeft = viewportPadding + tooltipWidth / 2;
+  let left;
+  if (minLeft > maxLeft) {
+    left = window.innerWidth / 2;
+  } else {
+    left = Math.min(Math.max(rect.left + rect.width / 2, minLeft), maxLeft);
+  }
+
+  let top = rect.top - 12;
+  let verticalTransform = '-100%';
+
+  if (top - tooltipHeight < viewportPadding) {
+    top = rect.bottom + 12;
+    verticalTransform = '0';
+    const maxTop = window.innerHeight - viewportPadding - tooltipHeight;
+    top = Math.min(top, maxTop);
+  }
+
+  if (verticalTransform === '-100%') {
+    const minTop = viewportPadding + tooltipHeight;
+    if (top < minTop) {
+      top = minTop;
+    }
+  } else if (top < viewportPadding) {
+    top = viewportPadding;
+  }
+
+  tooltipEl.style.left = `${left}px`;
+  tooltipEl.style.top = `${top}px`;
+  tooltipEl.style.transform = `translate(-50%, ${verticalTransform})`;
 }
 
 function renderHistoryChart(history, status) {
@@ -248,6 +289,9 @@ function prepareTooltipInsights(region) {
   const placeholder = document.createElement('li');
   placeholder.innerHTML = '<span class="label">Loading open data…</span>';
   tooltipInsightsList.append(placeholder);
+  if (tooltipAnchor) {
+    positionTooltip(tooltipAnchor);
+  }
 
   if (cached) {
     renderTooltipInsights(cached);
@@ -267,6 +311,9 @@ function prepareTooltipInsights(region) {
       message.innerHTML = '<span class="label">Live indicators unavailable</span>';
       tooltipInsightsList.append(message);
       tooltipInsightsNote.textContent = 'Showing generated grid metrics while open data is unreachable.';
+      if (tooltipAnchor) {
+        positionTooltip(tooltipAnchor);
+      }
       console.error('Unable to load open data for region', region.regionId, error);
     });
 }
@@ -292,11 +339,27 @@ function renderTooltipInsights(data) {
     empty.innerHTML = '<span class="label">No supporting data available</span>';
     tooltipInsightsList.append(empty);
     tooltipInsightsNote.textContent = 'Open datasets did not return contextual readings for this region.';
+    if (tooltipAnchor) {
+      positionTooltip(tooltipAnchor);
+    }
     return;
   }
 
   tooltipInsightsNote.textContent = `Powered by ${data.sources.join(' • ')}`;
+  if (tooltipAnchor) {
+    positionTooltip(tooltipAnchor);
+  }
 }
+
+function handleTooltipReposition() {
+  if (!tooltipAnchor || tooltipEl.hidden) {
+    return;
+  }
+  positionTooltip(tooltipAnchor);
+}
+
+window.addEventListener('resize', handleTooltipReposition);
+window.addEventListener('scroll', handleTooltipReposition, true);
 
 async function fetchLiveIndicators(region) {
   const [lon, lat] = region.coordinates;
