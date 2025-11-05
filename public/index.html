@@ -9,14 +9,30 @@
   <body>
     <div class="app-shell">
       <nav class="tabs" role="tablist" aria-label="Experience views">
-        <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="grid">
+        <button
+          class="tab active"
+          type="button"
+          id="grid-tab"
+          role="tab"
+          aria-selected="true"
+          aria-controls="grid-panel"
+          data-tab="grid"
+        >
           Grid signals
         </button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="daylight">
+        <button
+          class="tab"
+          type="button"
+          id="daylight-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="daylight-panel"
+          data-tab="daylight"
+        >
           Oslo daylight
         </button>
       </nav>
-      <main class="scene" data-panel="grid">
+      <main class="scene" id="grid-panel" data-panel="grid" role="tabpanel" aria-labelledby="grid-tab">
         <div class="map" id="map"></div>
         <aside class="overlay">
           <header class="title-block">
@@ -56,7 +72,14 @@
           <p class="footnote" id="tooltip-footnote"></p>
         </div>
       </main>
-      <section class="daylight-panel" data-panel="daylight" id="daylight-panel" hidden>
+      <section
+        class="daylight-panel"
+        data-panel="daylight"
+        id="daylight-panel"
+        role="tabpanel"
+        aria-labelledby="daylight-tab"
+        hidden
+      >
         <div class="daylight-card">
           <header class="daylight-header">
             <p class="eyebrow">Sunlight rhythm</p>
@@ -65,6 +88,8 @@
           </header>
           <div class="daylight-body">
             <div class="daylight-dial" id="daylight-dial">
+              <div class="clock-hand hour-hand" aria-hidden="true"></div>
+              <div class="clock-hand minute-hand" aria-hidden="true"></div>
               <div class="sun-indicator"></div>
               <div class="dial-center"></div>
             </div>

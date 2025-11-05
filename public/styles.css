@@ -64,6 +64,10 @@ body {
   box-shadow: 0 12px 32px rgba(14, 165, 233, 0.35);
 }
 
+[data-panel][hidden] {
+  display: none !important;
+}
+
 .scene {
   position: relative;
   width: min(1180px, 100%);
@@ -432,17 +436,23 @@ body {
 
 .daylight-dial {
   --daylight-start: 120deg;
+  --sunrise-end: 150deg;
+  --sunset-start: 210deg;
   --daylight-end: 240deg;
   --sun-angle: 0deg;
+  --hour-angle: 0deg;
+  --minute-angle: 0deg;
   --dial-radius: 46%;
   width: clamp(220px, 30vw, 280px);
   aspect-ratio: 1;
   border-radius: 50%;
   position: relative;
   background: conic-gradient(
-    rgba(15, 23, 42, 0.85) 0deg var(--daylight-start),
-    rgba(253, 224, 71, 0.4) var(--daylight-start) var(--daylight-end),
-    rgba(15, 23, 42, 0.85) var(--daylight-end) 360deg
+    rgba(15, 23, 42, 0.9) 0deg var(--daylight-start),
+    rgba(251, 146, 60, 0.55) var(--daylight-start) var(--sunrise-end),
+    rgba(253, 224, 71, 0.45) var(--sunrise-end) var(--sunset-start),
+    rgba(168, 85, 247, 0.5) var(--sunset-start) var(--daylight-end),
+    rgba(15, 23, 42, 0.9) var(--daylight-end) 360deg
   );
   display: grid;
   place-items: center;
@@ -467,6 +477,34 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
+.clock-hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  transform: translate(-50%, -100%) rotate(var(--hand-angle, 0deg));
+  border-radius: 999px;
+  pointer-events: none;
+  transition: transform 0.4s ease;
+  z-index: 2;
+}
+
+.hour-hand {
+  --hand-angle: var(--hour-angle, 0deg);
+  width: 6px;
+  height: calc(var(--dial-radius) * 0.75);
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.85), rgba(71, 85, 105, 0.85));
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
+}
+
+.minute-hand {
+  --hand-angle: var(--minute-angle, 0deg);
+  width: 4px;
+  height: calc(var(--dial-radius) * 0.95);
+  background: linear-gradient(180deg, rgba(191, 219, 254, 0.9), rgba(30, 64, 175, 0.8));
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+}
+
 .dial-center {
   width: 44%;
   aspect-ratio: 1;
@@ -474,6 +512,7 @@ body {
   background: radial-gradient(circle at center, rgba(15, 23, 42, 0.92), rgba(2, 6, 12, 0.96));
   box-shadow: inset 0 0 24px rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(148, 163, 184, 0.2);
+  z-index: 3;
 }
 
 .sun-indicator {
@@ -488,6 +527,7 @@ body {
   transform-origin: center;
   transform: rotate(var(--sun-angle)) translate(0, calc(-1 * var(--dial-radius)));
   transition: transform 0.4s ease, box-shadow 0.4s ease, opacity 0.4s ease;
+  z-index: 4;
 }
 
 .daylight-panel.is-night .sun-indicator {
