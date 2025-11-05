@@ -91,7 +91,10 @@ function switchTab(tabId) {
   }
   if (tabPanels.length) {
     tabPanels.forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== target;
+      const isActivePanel = panel.dataset.panel === target;
+      panel.hidden = !isActivePanel;
+      panel.setAttribute('aria-hidden', String(!isActivePanel));
+      panel.classList.toggle('is-active', isActivePanel);
     });
   }
   if (target === DAYLIGHT_TAB_ID) {
@@ -509,10 +512,17 @@ function updateDaylight() {
   const now = new Date();
   const zonedNow = getZonedDateParts(now, OSLO_TIME_ZONE);
   if (!zonedNow) {
+    daylightDial.style.setProperty('--hour-angle', '0deg');
+    daylightDial.style.setProperty('--minute-angle', '0deg');
     return;
   }
 
-  const baseDate = new Date(Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day));
+  const hourAngle = ((zonedNow.hours % 12) + zonedNow.minutes / 60 + zonedNow.seconds / 3600) * 30;
+  const minuteAngle = (zonedNow.minutes + zonedNow.seconds / 60) * 6;
+  daylightDial.style.setProperty('--hour-angle', `${hourAngle}deg`);
+  daylightDial.style.setProperty('--minute-angle', `${minuteAngle}deg`);
+
+  const baseDate = new Date(Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day, 12));
   const sunTimes = computeSunTimes(baseDate, OSLO_COORDS.latitude, OSLO_COORDS.longitude);
 
   if (!Number.isFinite(sunTimes.sunrise.getTime()) || !Number.isFinite(sunTimes.sunset.getTime())) {
@@ -521,6 +531,8 @@ function updateDaylight() {
     daylightLengthEl.textContent = '—';
     daylightStatusEl.textContent = 'Daylight data unavailable for today.';
     daylightDial.style.setProperty('--daylight-start', '0deg');
+    daylightDial.style.setProperty('--sunrise-end', '0deg');
+    daylightDial.style.setProperty('--sunset-start', '0deg');
     daylightDial.style.setProperty('--daylight-end', '360deg');
     daylightDial.style.setProperty('--sun-angle', '0deg');
     if (daylightPanel) {
@@ -544,15 +556,39 @@ function updateDaylight() {
   const daylightSeconds = Math.max(0, Math.round((sunTimes.sunset - sunTimes.sunrise) / 1000));
   daylightLengthEl.textContent = formatDuration(daylightSeconds);
 
-  let sunriseAngle = ((sunriseSeconds / secondsInDay) * 360) % 360;
-  let sunsetAngle = ((sunsetSeconds / secondsInDay) * 360) % 360;
-  const nowAngle = ((nowSeconds / secondsInDay) * 360) % 360;
+  const normalizeSeconds = (value) => ((value % secondsInDay) + secondsInDay) % secondsInDay;
+  const toAngle = (value) => (value / secondsInDay) * 360;
+  const ensureForwardProgress = (angle, previous) => {
+    let result = angle;
+    while (result < previous) {
+      result += 360;
+    }
+    return result;
+  };
 
-  if (sunsetAngle <= sunriseAngle) {
-    sunsetAngle += 360;
+  const sunriseSecondsNormalized = normalizeSeconds(sunriseSeconds);
+  let sunsetSecondsAdjusted = normalizeSeconds(sunsetSeconds);
+  if (sunsetSecondsAdjusted <= sunriseSecondsNormalized) {
+    sunsetSecondsAdjusted += secondsInDay;
+  }
+
+  const transitionSeconds = Math.min(3600, Math.max(0, daylightSeconds / 2));
+  const sunriseTransitionEndSeconds = Math.min(sunsetSecondsAdjusted, sunriseSecondsNormalized + transitionSeconds);
+  const sunsetTransitionStartSeconds = Math.max(sunriseSecondsNormalized, sunsetSecondsAdjusted - transitionSeconds);
+
+  const sunriseAngle = toAngle(sunriseSecondsNormalized);
+  const sunriseTransitionEndAngle = ensureForwardProgress(toAngle(sunriseTransitionEndSeconds), sunriseAngle);
+  const sunsetTransitionStartAngle = ensureForwardProgress(toAngle(sunsetTransitionStartSeconds), sunriseTransitionEndAngle);
+  const sunsetAngle = ensureForwardProgress(toAngle(sunsetSecondsAdjusted), sunsetTransitionStartAngle);
+
+  let nowAngle = toAngle(normalizeSeconds(nowSeconds));
+  if (sunsetAngle > 360 && nowAngle < sunriseAngle) {
+    nowAngle += 360;
   }
 
   daylightDial.style.setProperty('--daylight-start', `${sunriseAngle}deg`);
+  daylightDial.style.setProperty('--sunrise-end', `${sunriseTransitionEndAngle}deg`);
+  daylightDial.style.setProperty('--sunset-start', `${sunsetTransitionStartAngle}deg`);
   daylightDial.style.setProperty('--daylight-end', `${sunsetAngle}deg`);
   daylightDial.style.setProperty('--sun-angle', `${nowAngle}deg`);
 
