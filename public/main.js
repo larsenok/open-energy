@@ -11,6 +11,14 @@ const tooltipClose = document.getElementById('tooltip-close');
 const tooltipInsights = document.getElementById('tooltip-insights');
 const tooltipInsightsList = document.getElementById('tooltip-insights-list');
 const tooltipInsightsNote = document.getElementById('tooltip-insights-note');
+const tabButtons = Array.from(document.querySelectorAll('[data-tab]'));
+const tabPanels = Array.from(document.querySelectorAll('[data-panel]'));
+const daylightPanel = document.getElementById('daylight-panel');
+const daylightDial = document.getElementById('daylight-dial');
+const sunriseTimeEl = document.getElementById('sunrise-time');
+const sunsetTimeEl = document.getElementById('sunset-time');
+const daylightLengthEl = document.getElementById('daylight-length');
+const daylightStatusEl = document.getElementById('daylight-status');
 
 let activeRegionId = null;
 let regions = [];
@@ -18,8 +26,28 @@ let animationFrame = null;
 let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
 const OPEN_DATA_TIMEOUT = 5500;
+const DEFAULT_TAB_ID = 'grid';
+const DAYLIGHT_TAB_ID = 'daylight';
+const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
+const OSLO_TIME_ZONE = 'Europe/Oslo';
+const DAYLIGHT_REFRESH_INTERVAL = 60 * 1000;
 
 const insightsCache = new Map();
+
+if (tabButtons.length) {
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const tabId = button.dataset.tab || DEFAULT_TAB_ID;
+      switchTab(tabId);
+    });
+  });
+  switchTab(DEFAULT_TAB_ID);
+}
+
+if (daylightDial) {
+  updateDaylight();
+  setInterval(updateDaylight, DAYLIGHT_REFRESH_INTERVAL);
+}
 
 fetch('data/energy.json')
   .then((response) => {
@@ -50,6 +78,26 @@ tooltipClose.addEventListener('click', () => {
     element.dataset.state = '';
   }
 });
+
+function switchTab(tabId) {
+  const target = tabId || DEFAULT_TAB_ID;
+  if (tabButtons.length) {
+    tabButtons.forEach((button) => {
+      const isActive = button.dataset.tab === target;
+      button.classList.toggle('active', isActive);
+      button.setAttribute('aria-selected', String(isActive));
+      button.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
+  }
+  if (tabPanels.length) {
+    tabPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== target;
+    });
+  }
+  if (target === DAYLIGHT_TAB_ID) {
+    updateDaylight();
+  }
+}
 
 function renderRegions() {
   mapEl.textContent = '';
@@ -451,4 +499,188 @@ async function fetchJson(url, timeout) {
   } finally {
     clearTimeout(id);
   }
+}
+
+function updateDaylight() {
+  if (!daylightDial || !sunriseTimeEl || !sunsetTimeEl || !daylightLengthEl || !daylightStatusEl) {
+    return;
+  }
+
+  const now = new Date();
+  const zonedNow = getZonedDateParts(now, OSLO_TIME_ZONE);
+  if (!zonedNow) {
+    return;
+  }
+
+  const baseDate = new Date(Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day));
+  const sunTimes = computeSunTimes(baseDate, OSLO_COORDS.latitude, OSLO_COORDS.longitude);
+
+  if (!Number.isFinite(sunTimes.sunrise.getTime()) || !Number.isFinite(sunTimes.sunset.getTime())) {
+    sunriseTimeEl.textContent = '—';
+    sunsetTimeEl.textContent = '—';
+    daylightLengthEl.textContent = '—';
+    daylightStatusEl.textContent = 'Daylight data unavailable for today.';
+    daylightDial.style.setProperty('--daylight-start', '0deg');
+    daylightDial.style.setProperty('--daylight-end', '360deg');
+    daylightDial.style.setProperty('--sun-angle', '0deg');
+    if (daylightPanel) {
+      daylightPanel.classList.remove('is-day');
+      daylightPanel.classList.add('is-night');
+    }
+    return;
+  }
+
+  sunriseTimeEl.textContent = formatTime(sunTimes.sunrise, OSLO_TIME_ZONE);
+  sunsetTimeEl.textContent = formatTime(sunTimes.sunset, OSLO_TIME_ZONE);
+
+  const sunriseParts = getTimeParts(sunTimes.sunrise, OSLO_TIME_ZONE);
+  const sunsetParts = getTimeParts(sunTimes.sunset, OSLO_TIME_ZONE);
+
+  const sunriseSeconds = toSeconds(sunriseParts);
+  const sunsetSeconds = toSeconds(sunsetParts);
+  const nowSeconds = toSeconds({ hours: zonedNow.hours, minutes: zonedNow.minutes, seconds: zonedNow.seconds });
+  const secondsInDay = 24 * 60 * 60;
+
+  const daylightSeconds = Math.max(0, Math.round((sunTimes.sunset - sunTimes.sunrise) / 1000));
+  daylightLengthEl.textContent = formatDuration(daylightSeconds);
+
+  let sunriseAngle = ((sunriseSeconds / secondsInDay) * 360) % 360;
+  let sunsetAngle = ((sunsetSeconds / secondsInDay) * 360) % 360;
+  const nowAngle = ((nowSeconds / secondsInDay) * 360) % 360;
+
+  if (sunsetAngle <= sunriseAngle) {
+    sunsetAngle += 360;
+  }
+
+  daylightDial.style.setProperty('--daylight-start', `${sunriseAngle}deg`);
+  daylightDial.style.setProperty('--daylight-end', `${sunsetAngle}deg`);
+  daylightDial.style.setProperty('--sun-angle', `${nowAngle}deg`);
+
+  const isDay = sunriseSeconds <= sunsetSeconds
+    ? nowSeconds >= sunriseSeconds && nowSeconds < sunsetSeconds
+    : nowSeconds >= sunriseSeconds || nowSeconds < sunsetSeconds;
+
+  if (daylightPanel) {
+    daylightPanel.classList.toggle('is-day', isDay);
+    daylightPanel.classList.toggle('is-night', !isDay);
+  }
+
+  const untilSunset = (sunsetSeconds - nowSeconds + secondsInDay) % secondsInDay;
+  const untilSunrise = (sunriseSeconds - nowSeconds + secondsInDay) % secondsInDay;
+
+  if (isDay) {
+    daylightStatusEl.textContent = untilSunset === 0 ? 'The sun is setting over Oslo now.' : `Sunset in ${formatDuration(untilSunset)}.`;
+  } else {
+    daylightStatusEl.textContent = untilSunrise === 0 ? 'Dawn is breaking in Oslo.' : `Sunrise in ${formatDuration(untilSunrise)}.`;
+  }
+}
+
+function getZonedDateParts(date, timeZone) {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(date);
+    const lookup = (type) => {
+      const part = parts.find((entry) => entry.type === type);
+      return part ? Number(part.value) : 0;
+    };
+    return {
+      year: lookup('year'),
+      month: lookup('month'),
+      day: lookup('day'),
+      hours: lookup('hour'),
+      minutes: lookup('minute'),
+      seconds: lookup('second')
+    };
+  } catch (error) {
+    console.error('Unable to resolve zoned date parts', error);
+    return null;
+  }
+}
+
+function getTimeParts(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  const parts = formatter.formatToParts(date);
+  const lookup = (type) => {
+    const part = parts.find((entry) => entry.type === type);
+    return part ? Number(part.value) : 0;
+  };
+  return {
+    hours: lookup('hour'),
+    minutes: lookup('minute'),
+    seconds: lookup('second')
+  };
+}
+
+function toSeconds(parts) {
+  return parts.hours * 3600 + parts.minutes * 60 + parts.seconds;
+}
+
+function formatTime(date, timeZone) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  return formatter.format(date);
+}
+
+function formatDuration(totalSeconds) {
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  }
+  return `${minutes}m`;
+}
+
+function computeSunTimes(date, latitude, longitude) {
+  const rad = Math.PI / 180;
+  const dayMs = 1000 * 60 * 60 * 24;
+  const J1970 = 2440588;
+  const J2000 = 2451545;
+
+  const toJulian = (value) => value / dayMs - 0.5 + J1970;
+  const fromJulian = (julian) => new Date((julian + 0.5 - J1970) * dayMs);
+  const toDays = (value) => toJulian(value) - J2000;
+
+  const lw = -longitude * rad;
+  const phi = latitude * rad;
+
+  const d = toDays(date);
+  const M = rad * (357.5291 + 0.98560028 * d);
+  const C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  const P = rad * 102.9372;
+  const L = M + C + P + Math.PI;
+  const D = Math.asin(Math.sin(L) * Math.sin(rad * 23.4397));
+  const Jtransit = J2000 + d + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const cosOmega = (Math.sin(rad * -0.83) - Math.sin(phi) * Math.sin(D)) / (Math.cos(phi) * Math.cos(D));
+  if (cosOmega > 1 || cosOmega < -1) {
+    const invalid = new Date(Number.NaN);
+    return { sunrise: invalid, sunset: invalid };
+  }
+  const omega = Math.acos(cosOmega);
+  const Jset = Jtransit + omega / (2 * Math.PI);
+  const Jrise = Jtransit - omega / (2 * Math.PI);
+
+  return {
+    sunrise: fromJulian(Jrise),
+    sunset: fromJulian(Jset)
+  };
 }
