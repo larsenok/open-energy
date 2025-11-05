@@ -7,46 +7,86 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="scene">
-      <div class="map" id="map"></div>
-      <aside class="overlay">
-        <header class="title-block">
-          <p class="eyebrow">Live energy intelligence</p>
-          <h1>Human Energy Exchange</h1>
-          <p class="lead">
-            Track the tug-of-war between electricity demand and renewable supply across every region in
-            real time.
-          </p>
-          <ul class="highlights">
-            <li><strong>Tap a pulse</strong> to inspect the local balance and fuel mix.</li>
-            <li><strong>Watch the color</strong>—cool hues signal clean surplus, warm tones show stress.</li>
-            <li><strong>Follow the trends</strong> with live open data insights for each grid.</li>
-          </ul>
-          <p class="status" id="status">Loading live grid signals…</p>
-          <p class="timestamp" id="timestamp"></p>
-        </header>
-        <section class="legend">
-          <h2>Legend</h2>
-          <ul>
-            <li><span class="swatch surplus"></span>Clean surplus</li>
-            <li><span class="swatch deficit"></span>Grid under strain</li>
-          </ul>
-        </section>
-      </aside>
-      <div class="tooltip" id="tooltip" hidden>
-        <button class="close" id="tooltip-close" aria-label="Close">×</button>
-        <h3 id="tooltip-title"></h3>
-        <p class="metric" id="tooltip-balance"></p>
-        <dl class="mix" id="tooltip-mix"></dl>
-        <div class="chart" id="tooltip-chart"></div>
-        <section class="insights" id="tooltip-insights" hidden>
-          <h4>Live open data</h4>
-          <ul id="tooltip-insights-list"></ul>
-          <p class="insights-note" id="tooltip-insights-note"></p>
-        </section>
-        <p class="footnote" id="tooltip-footnote"></p>
-      </div>
-    </main>
+    <div class="app-shell">
+      <nav class="tabs" role="tablist" aria-label="Experience views">
+        <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="grid">
+          Grid signals
+        </button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="daylight">
+          Oslo daylight
+        </button>
+      </nav>
+      <main class="scene" data-panel="grid">
+        <div class="map" id="map"></div>
+        <aside class="overlay">
+          <header class="title-block">
+            <p class="eyebrow">Live energy intelligence</p>
+            <h1>Human Energy Exchange</h1>
+            <p class="lead">
+              Track the tug-of-war between electricity demand and renewable supply across every region in
+              real time.
+            </p>
+            <ul class="highlights">
+              <li><strong>Tap a pulse</strong> to inspect the local balance and fuel mix.</li>
+              <li><strong>Watch the color</strong>—cool hues signal clean surplus, warm tones show stress.</li>
+              <li><strong>Follow the trends</strong> with live open data insights for each grid.</li>
+            </ul>
+            <p class="status" id="status">Loading live grid signals…</p>
+            <p class="timestamp" id="timestamp"></p>
+          </header>
+          <section class="legend">
+            <h2>Legend</h2>
+            <ul>
+              <li><span class="swatch surplus"></span>Clean surplus</li>
+              <li><span class="swatch deficit"></span>Grid under strain</li>
+            </ul>
+          </section>
+        </aside>
+        <div class="tooltip" id="tooltip" hidden>
+          <button class="close" id="tooltip-close" aria-label="Close">×</button>
+          <h3 id="tooltip-title"></h3>
+          <p class="metric" id="tooltip-balance"></p>
+          <dl class="mix" id="tooltip-mix"></dl>
+          <div class="chart" id="tooltip-chart"></div>
+          <section class="insights" id="tooltip-insights" hidden>
+            <h4>Live open data</h4>
+            <ul id="tooltip-insights-list"></ul>
+            <p class="insights-note" id="tooltip-insights-note"></p>
+          </section>
+          <p class="footnote" id="tooltip-footnote"></p>
+        </div>
+      </main>
+      <section class="daylight-panel" data-panel="daylight" id="daylight-panel" hidden>
+        <div class="daylight-card">
+          <header class="daylight-header">
+            <p class="eyebrow">Sunlight rhythm</p>
+            <h2>Oslo daylight clock</h2>
+            <p>Follow today’s daylight arc for Norway’s capital in real time.</p>
+          </header>
+          <div class="daylight-body">
+            <div class="daylight-dial" id="daylight-dial">
+              <div class="sun-indicator"></div>
+              <div class="dial-center"></div>
+            </div>
+            <dl class="daylight-timings">
+              <div>
+                <dt>Sunrise</dt>
+                <dd id="sunrise-time">—</dd>
+              </div>
+              <div>
+                <dt>Sunset</dt>
+                <dd id="sunset-time">—</dd>
+              </div>
+              <div>
+                <dt>Daylight</dt>
+                <dd id="daylight-length">—</dd>
+              </div>
+            </dl>
+            <p class="daylight-status" id="daylight-status">Loading daylight data…</p>
+          </div>
+        </div>
+      </section>
+    </div>
     <script type="module" src="main.js"></script>
   </body>
 </html>
