@@ -19,6 +19,7 @@ const sunriseTimeEl = document.getElementById('sunrise-time');
 const sunsetTimeEl = document.getElementById('sunset-time');
 const daylightLengthEl = document.getElementById('daylight-length');
 const daylightStatusEl = document.getElementById('daylight-status');
+const todayDateEl = document.getElementById('today-date');
 
 let activeRegionId = null;
 let regions = [];
@@ -47,6 +48,11 @@ if (tabButtons.length) {
 if (daylightDial) {
   updateDaylight();
   setInterval(updateDaylight, DAYLIGHT_REFRESH_INTERVAL);
+}
+
+if (todayDateEl) {
+  updateTodayDate();
+  setInterval(updateTodayDate, 60 * 1000);
 }
 
 fetch('data/energy.json')
@@ -609,6 +615,23 @@ function updateDaylight() {
   } else {
     daylightStatusEl.textContent = untilSunrise === 0 ? 'Dawn is breaking in Oslo.' : `Sunrise in ${formatDuration(untilSunrise)}.`;
   }
+}
+
+function updateTodayDate() {
+  if (!todayDateEl) {
+    return;
+  }
+
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  todayDateEl.textContent = formatter.format(now);
+  todayDateEl.setAttribute('datetime', now.toISOString().split('T')[0]);
 }
 
 function getZonedDateParts(date, timeZone) {

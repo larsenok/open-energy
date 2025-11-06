@@ -157,6 +157,22 @@ body {
   line-height: 1.5;
 }
 
+.title-block .highlights .highlight-date {
+  list-style: none;
+}
+
+.title-block .highlights .highlight-date time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: rgba(241, 245, 249, 0.95);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
 .status {
   color: #38bdf8;
 }
@@ -488,12 +504,29 @@ body {
   border-radius: 50%;
   background: conic-gradient(
       from 180deg,
-      rgba(251, 146, 60, 0.25) var(--daylight-start) var(--sunrise-end),
+      rgba(251, 146, 60, 0.32) var(--daylight-start) var(--sunrise-end),
       transparent var(--sunrise-end) var(--sunset-start),
-      rgba(168, 85, 247, 0.25) var(--sunset-start) var(--daylight-end)
+      rgba(168, 85, 247, 0.32) var(--sunset-start) var(--daylight-end),
+      transparent var(--daylight-end) 360deg
     );
   filter: blur(28px);
-  opacity: 0.85;
+  opacity: 0.88;
+  mask: conic-gradient(
+      from 180deg,
+      transparent 0deg var(--daylight-start),
+      white var(--daylight-start) var(--sunrise-end),
+      transparent var(--sunrise-end) var(--sunset-start),
+      white var(--sunset-start) var(--daylight-end),
+      transparent var(--daylight-end) 360deg
+    );
+  -webkit-mask: conic-gradient(
+      from 180deg,
+      transparent 0deg var(--daylight-start),
+      white var(--daylight-start) var(--sunrise-end),
+      transparent var(--sunrise-end) var(--sunset-start),
+      white var(--sunset-start) var(--daylight-end),
+      transparent var(--daylight-end) 360deg
+    );
   z-index: 0;
 }
 
@@ -501,7 +534,9 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform-origin: 50% 100%;
+  width: calc(var(--hand-width) * 2.1);
+  height: calc(var(--hand-length) + var(--hand-base-size));
+  transform-origin: 50% calc(100% - var(--hand-base-size) * 0.35);
   transform: translate(-50%, -100%) rotate(var(--hand-angle, 0deg));
   pointer-events: none;
   transition: transform 0.4s ease;
@@ -517,34 +552,35 @@ body {
 .clock-hand::before {
   content: '';
   position: absolute;
-  inset: 0;
-  width: var(--hand-width);
-  height: var(--hand-length);
-  margin: 0 auto;
+  left: 50%;
+  bottom: calc(var(--hand-base-size) * 0.4);
+  width: calc(var(--hand-width) * 1.9);
+  height: calc(var(--hand-length) - var(--hand-base-size) * 0.15);
+  transform: translateX(-50%);
   background: var(--hand-fill);
-  border-radius: calc(var(--hand-width) * 0.55);
+  border-radius: calc(var(--hand-width) * 1.05);
   box-shadow: var(--hand-shadow);
-  clip-path: polygon(50% 0, 70% 15%, 70% 90%, 50% 100%, 30% 90%, 30% 15%);
+  clip-path: polygon(50% 0, 76% 18%, 66% 84%, 50% 100%, 34% 84%, 24% 18%);
 }
 
 .clock-hand::after {
   content: '';
   position: absolute;
   left: 50%;
-  bottom: calc(-1 * var(--hand-base-size) * 0.18);
-  width: var(--hand-base-size);
-  height: var(--hand-base-size);
+  bottom: 0;
+  width: calc(var(--hand-width) * 0.85);
+  height: calc(var(--hand-base-size) * 0.8);
   transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(248, 250, 252, 0.85), rgba(100, 116, 139, 0.9) 60%, rgba(15, 23, 42, 0.95));
-  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.35), 0 6px 14px rgba(15, 23, 42, 0.25);
+  border-radius: calc(var(--hand-width) * 0.5);
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.85), rgba(30, 41, 59, 0.95));
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.25);
 }
 
 .hour-hand {
   --hand-angle: var(--hour-angle, 0deg);
   --hand-width: 7px;
-  --hand-length: calc(var(--dial-radius) * 0.74);
-  --hand-base-size: 18px;
+  --hand-length: calc(var(--dial-radius) * 0.7);
+  --hand-base-size: 20px;
   --hand-fill: linear-gradient(180deg, rgba(226, 232, 240, 0.95), rgba(71, 85, 105, 0.96));
   --hand-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
 }
@@ -552,7 +588,7 @@ body {
 .minute-hand {
   --hand-angle: var(--minute-angle, 0deg);
   --hand-width: 4px;
-  --hand-length: calc(var(--dial-radius) * 0.96);
+  --hand-length: calc(var(--dial-radius) * 0.95);
   --hand-base-size: 16px;
   --hand-fill: linear-gradient(180deg, rgba(203, 213, 225, 0.9), rgba(59, 130, 246, 0.82));
   --hand-shadow: 0 18px 32px rgba(37, 99, 235, 0.28);
@@ -566,6 +602,15 @@ body {
   box-shadow: inset 0 0 24px rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(148, 163, 184, 0.2);
   z-index: 4;
+}
+
+.dial-center::after {
+  content: '';
+  position: absolute;
+  inset: 32%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, rgba(248, 250, 252, 0.9), rgba(71, 85, 105, 0.95));
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.45);
 }
 
 .sun-indicator {
