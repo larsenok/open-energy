@@ -26,14 +26,15 @@ let regions = [];
 let animationFrame = null;
 let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
-const OPEN_DATA_TIMEOUT = 5500;
 const DEFAULT_TAB_ID = 'grid';
 const DAYLIGHT_TAB_ID = 'daylight';
 const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
 const OSLO_TIME_ZONE = 'Europe/Oslo';
 const DAYLIGHT_REFRESH_INTERVAL = 60 * 1000;
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const insightsCache = new Map();
+const insightsByRegion = new Map();
+let insightsUpdatedAt = null;
 
 if (tabButtons.length) {
   tabButtons.forEach((button) => {
@@ -55,17 +56,36 @@ if (todayDateEl) {
   setInterval(updateTodayDate, 60 * 1000);
 }
 
-fetch('data/energy.json')
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error('Unable to load energy data');
-    }
-    return response.json();
-  })
-  .then((payload) => {
+const energyRequest = fetch('data/energy.json').then((response) => {
+  if (!response.ok) {
+    throw new Error('Unable to load energy data');
+  }
+  return response.json();
+});
+
+const insightsRequest = fetch('data/insights.json')
+  .then((response) => (response.ok ? response.json() : null))
+  .catch((error) => {
+    console.warn('Cached insights unavailable', error);
+    return null;
+  });
+
+Promise.all([energyRequest, insightsRequest])
+  .then(([payload, insights]) => {
     regions = payload.regions;
     statusEl.textContent = 'Live grid signals updated';
     timestampEl.textContent = `Updated ${new Date(payload.updatedAt).toLocaleTimeString()}`;
+
+    insightsByRegion.clear();
+    if (insights && insights.regions) {
+      insightsUpdatedAt = insights.updatedAt ?? null;
+      Object.entries(insights.regions).forEach(([regionId, record]) => {
+        insightsByRegion.set(regionId, record);
+      });
+    } else {
+      insightsUpdatedAt = null;
+    }
+
     renderRegions();
     startAnimation();
   })
@@ -218,7 +238,7 @@ function showTooltip(region, element) {
 
   tooltipFootnote.textContent = `Carbon intensity: ${region.carbonIntensity} gCO₂/kWh · Renewable share ${(region.renewableShare * 100).toFixed(0)}%`;
 
-  renderHistoryChart(region.history, status);
+  renderHistoryChart(region.history);
   prepareTooltipInsights(region);
 
   tooltipEl.hidden = false;
@@ -264,69 +284,81 @@ function positionTooltip(element) {
   tooltipEl.style.transform = `translate(-50%, ${verticalTransform})`;
 }
 
-function renderHistoryChart(history, status) {
+function renderHistoryChart(history) {
   tooltipChart.textContent = '';
-  if (!history.length) {
+  if (!Array.isArray(history) || !history.length) {
     return;
   }
-  const width = 240;
-  const height = 110;
-  const max = Math.max(...history.map((d) => d.netBalanceMw));
-  const min = Math.min(...history.map((d) => d.netBalanceMw));
-  const range = Math.max(1, max - min);
 
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const width = 260;
+  const height = 86;
+  const balances = history.map((entry) => Number(entry.netBalanceMw) || 0);
+  const max = Math.max(...balances, 0);
+  const min = Math.min(...balances, 0);
+  const range = Math.max(1, max - min || 1);
+  const zeroLine = height - ((0 - min) / range) * height;
+  const zeroY = Math.max(0, Math.min(height, zeroLine));
+
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.classList.add('sparkline');
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-  const midline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  const zeroY = height - ((0 - min) / range) * height;
-  midline.setAttribute('x1', '0');
-  midline.setAttribute('x2', String(width));
-  midline.setAttribute('y1', String(zeroY));
-  midline.setAttribute('y2', String(zeroY));
-  midline.setAttribute('stroke', 'rgba(148, 163, 184, 0.25)');
-  midline.setAttribute('stroke-dasharray', '4 6');
-  svg.append(midline);
+  const baseline = document.createElementNS(SVG_NS, 'line');
+  baseline.classList.add('sparkline__baseline');
+  baseline.setAttribute('x1', '0');
+  baseline.setAttribute('x2', String(width));
+  baseline.setAttribute('y1', String(zeroY));
+  baseline.setAttribute('y2', String(zeroY));
+  svg.append(baseline);
 
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const points = history
-    .map((entry, index) => {
-      const x = (index / Math.max(1, history.length - 1)) * width;
-      const y = height - ((entry.netBalanceMw - min) / range) * height;
-      return [x, y];
-    });
+  const points = history.map((entry, index) => {
+    const x = history.length === 1 ? width : (index / Math.max(1, history.length - 1)) * width;
+    const y = height - ((balances[index] - min) / range) * height;
+    return [Number(x.toFixed(2)), Number(y.toFixed(2))];
+  });
 
-  const d = points
-    .map((point, index) => (index === 0 ? `M ${point[0]} ${point[1]}` : `L ${point[0]} ${point[1]}`))
-    .join(' ');
+  for (let index = 1; index < points.length; index += 1) {
+    const prevPoint = points[index - 1];
+    const currPoint = points[index];
+    const prevValue = balances[index - 1];
+    const currValue = balances[index];
 
-  path.setAttribute('d', d);
-  const gradient = status === 'surplus' ? 'url(#surplusGradient)' : 'url(#deficitGradient)';
-  path.setAttribute('stroke', gradient);
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke-width', '2.5');
-  svg.append(path);
+    if ((prevValue >= 0 && currValue >= 0) || (prevValue <= 0 && currValue <= 0) || prevValue === currValue) {
+      const segment = document.createElementNS(SVG_NS, 'path');
+      segment.setAttribute('d', `M ${prevPoint[0]} ${prevPoint[1]} L ${currPoint[0]} ${currPoint[1]}`);
+      segment.classList.add('sparkline__segment');
+      segment.classList.add(prevValue >= 0 ? 'sparkline__segment--surplus' : 'sparkline__segment--deficit');
+      svg.append(segment);
+      continue;
+    }
 
-  const gradientDef = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-  const gradientId = status === 'surplus' ? 'surplusGradient' : 'deficitGradient';
-  gradientDef.setAttribute('id', gradientId);
-  gradientDef.setAttribute('x1', '0%');
-  gradientDef.setAttribute('x2', '100%');
-  gradientDef.setAttribute('y1', '0%');
-  gradientDef.setAttribute('y2', '0%');
+    const delta = Math.abs(currValue - prevValue) || 1;
+    const proportion = Math.abs(prevValue) / delta;
+    const zeroX = prevPoint[0] + (currPoint[0] - prevPoint[0]) * proportion;
+    const zeroPoint = [Number(zeroX.toFixed(2)), Number(zeroY.toFixed(2))];
 
-  const stopA = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stopA.setAttribute('offset', '0%');
-  stopA.setAttribute('stop-color', status === 'surplus' ? '#22d3ee' : '#f97316');
-  const stopB = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-  stopB.setAttribute('offset', '100%');
-  stopB.setAttribute('stop-color', status === 'surplus' ? '#a3e635' : '#f43f5e');
+    const first = document.createElementNS(SVG_NS, 'path');
+    first.setAttribute('d', `M ${prevPoint[0]} ${prevPoint[1]} L ${zeroPoint[0]} ${zeroPoint[1]}`);
+    first.classList.add('sparkline__segment');
+    first.classList.add(prevValue >= 0 ? 'sparkline__segment--surplus' : 'sparkline__segment--deficit');
+    svg.append(first);
 
-  gradientDef.append(stopA, stopB);
+    const second = document.createElementNS(SVG_NS, 'path');
+    second.setAttribute('d', `M ${zeroPoint[0]} ${zeroPoint[1]} L ${currPoint[0]} ${currPoint[1]}`);
+    second.classList.add('sparkline__segment');
+    second.classList.add(currValue >= 0 ? 'sparkline__segment--surplus' : 'sparkline__segment--deficit');
+    svg.append(second);
+  }
 
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-  defs.append(gradientDef);
-  svg.insertBefore(defs, svg.firstChild);
+  const lastPoint = points[points.length - 1];
+  const lastValue = balances[balances.length - 1];
+  const marker = document.createElementNS(SVG_NS, 'circle');
+  marker.classList.add('sparkline__marker');
+  marker.classList.add(lastValue >= 0 ? 'sparkline__marker--surplus' : 'sparkline__marker--deficit');
+  marker.setAttribute('cx', String(lastPoint[0]));
+  marker.setAttribute('cy', String(lastPoint[1]));
+  marker.setAttribute('r', '3.5');
+  svg.append(marker);
 
   tooltipChart.append(svg);
 }
@@ -339,70 +371,62 @@ function resetTooltipInsights() {
 }
 
 function prepareTooltipInsights(region) {
-  const cached = insightsCache.get(region.regionId);
   resetTooltipInsights();
   tooltipInsights.hidden = false;
-  tooltipInsights.classList.add('loading');
-  const placeholder = document.createElement('li');
-  placeholder.innerHTML = '<span class="label">Loading open data…</span>';
-  tooltipInsightsList.append(placeholder);
-  if (tooltipAnchor) {
-    positionTooltip(tooltipAnchor);
-  }
 
-  if (cached) {
-    renderTooltipInsights(cached);
-    return;
-  }
-
-  fetchLiveIndicators(region)
-    .then((data) => {
-      insightsCache.set(region.regionId, data);
-      renderTooltipInsights(data);
-    })
-    .catch((error) => {
-      tooltipInsights.classList.remove('loading');
-      tooltipInsights.classList.add('error');
-      tooltipInsightsList.textContent = '';
-      const message = document.createElement('li');
-      message.innerHTML = '<span class="label">Live indicators unavailable</span>';
-      tooltipInsightsList.append(message);
-      tooltipInsightsNote.textContent = 'Showing generated grid metrics while open data is unreachable.';
-      if (tooltipAnchor) {
-        positionTooltip(tooltipAnchor);
-      }
-      console.error('Unable to load open data for region', region.regionId, error);
-    });
-}
-
-function renderTooltipInsights(data) {
-  tooltipInsights.classList.remove('loading', 'error');
-  tooltipInsightsList.textContent = '';
-
-  data.entries.forEach((entry) => {
-    const item = document.createElement('li');
-    const label = document.createElement('span');
-    label.className = 'label';
-    label.textContent = entry.label;
-    const value = document.createElement('span');
-    value.className = 'value';
-    value.textContent = entry.value;
-    item.append(label, value);
-    tooltipInsightsList.append(item);
-  });
-
-  if (!data.entries.length) {
-    const empty = document.createElement('li');
-    empty.innerHTML = '<span class="label">No supporting data available</span>';
-    tooltipInsightsList.append(empty);
-    tooltipInsightsNote.textContent = 'Open datasets did not return contextual readings for this region.';
+  const record = insightsByRegion.get(region.regionId);
+  if (!record) {
+    tooltipInsights.classList.add('error');
+    const placeholder = document.createElement('li');
+    placeholder.innerHTML = '<span class="label">Cached open data unavailable</span>';
+    tooltipInsightsList.append(placeholder);
+    tooltipInsightsNote.textContent = 'Build pipeline did not provide live insights for this region.';
     if (tooltipAnchor) {
       positionTooltip(tooltipAnchor);
     }
     return;
   }
 
-  tooltipInsightsNote.textContent = `Powered by ${data.sources.join(' • ')}`;
+  renderTooltipInsights(record);
+}
+
+function renderTooltipInsights(record) {
+  tooltipInsights.classList.remove('loading');
+  tooltipInsights.classList.toggle('error', record.status !== 'ok');
+  tooltipInsightsList.textContent = '';
+
+  const entries = Array.isArray(record.entries) ? record.entries : [];
+  if (entries.length) {
+    entries.forEach((entry) => {
+      const item = document.createElement('li');
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = entry.label;
+      const value = document.createElement('span');
+      value.className = 'value';
+      value.textContent = entry.value;
+      item.append(label, value);
+      tooltipInsightsList.append(item);
+    });
+  } else {
+    const empty = document.createElement('li');
+    empty.innerHTML = '<span class="label">No supporting data available</span>';
+    tooltipInsightsList.append(empty);
+  }
+
+  const noteParts = [];
+  const updatedAt = record.updatedAt ?? insightsUpdatedAt;
+  if (updatedAt) {
+    noteParts.push(`Last updated ${formatInsightTimestamp(updatedAt)}`);
+  }
+  if (Array.isArray(record.sources) && record.sources.length) {
+    noteParts.push(`Sources: ${record.sources.join(' • ')}`);
+  }
+  if (record.status !== 'ok') {
+    noteParts.push(record.error || 'Open data feeds were unavailable; showing modelled metrics.');
+  }
+  tooltipInsightsNote.textContent = noteParts.join(' • ') || 'Open datasets did not return contextual readings for this region.';
+
   if (tooltipAnchor) {
     positionTooltip(tooltipAnchor);
   }
@@ -417,98 +441,6 @@ function handleTooltipReposition() {
 
 window.addEventListener('resize', handleTooltipReposition);
 window.addEventListener('scroll', handleTooltipReposition, true);
-
-async function fetchLiveIndicators(region) {
-  const [lon, lat] = region.coordinates;
-  const meteoUrl = new URL('https://api.open-meteo.com/v1/forecast');
-  meteoUrl.searchParams.set('latitude', lat.toFixed(4));
-  meteoUrl.searchParams.set('longitude', lon.toFixed(4));
-  meteoUrl.searchParams.set('current', 'temperature_2m,wind_speed_10m,solar_radiation');
-  meteoUrl.searchParams.set('hourly', 'direct_radiation');
-  meteoUrl.searchParams.set('forecast_days', '1');
-  meteoUrl.searchParams.set('timezone', 'UTC');
-
-  const airUrl = new URL('https://api.openaq.org/v2/latest');
-  airUrl.searchParams.set('coordinates', `${lat.toFixed(4)},${lon.toFixed(4)}`);
-  airUrl.searchParams.set('radius', '100000');
-  airUrl.searchParams.set('limit', '1');
-  airUrl.searchParams.set('order_by', 'datetime');
-  airUrl.searchParams.set('sort', 'desc');
-  airUrl.searchParams.set('parameter', 'pm25');
-
-  const emissionsUrl = new URL('https://api.emissions-api.org/api/v2/carbonmonoxide/average.json');
-  emissionsUrl.searchParams.set('point', `${lon.toFixed(4)},${lat.toFixed(4)}`);
-  emissionsUrl.searchParams.set('limit', '1');
-
-  const [meteo, air, emissions] = await Promise.allSettled([
-    fetchJson(meteoUrl, OPEN_DATA_TIMEOUT),
-    fetchJson(airUrl, OPEN_DATA_TIMEOUT),
-    fetchJson(emissionsUrl, OPEN_DATA_TIMEOUT)
-  ]);
-
-  const entries = [];
-  const sources = new Set();
-
-  if (meteo.status === 'fulfilled') {
-    const before = entries.length;
-    const { current, hourly } = meteo.value ?? {};
-    if (current) {
-      if (typeof current.temperature_2m === 'number') {
-        entries.push({ label: 'Air temperature', value: `${Math.round(current.temperature_2m)}°C` });
-      }
-      if (typeof current.wind_speed_10m === 'number') {
-        entries.push({ label: 'Wind speed', value: `${current.wind_speed_10m.toFixed(1)} m/s` });
-      }
-      if (typeof current.solar_radiation === 'number') {
-        entries.push({ label: 'Solar radiation', value: `${Math.round(current.solar_radiation)} W/m²` });
-      }
-    }
-    if (hourly && Array.isArray(hourly.direct_radiation) && hourly.direct_radiation.length) {
-      const recent = hourly.direct_radiation[hourly.direct_radiation.length - 1];
-      if (typeof recent === 'number') {
-        entries.push({ label: 'Direct irradiance', value: `${Math.round(recent)} W/m²` });
-      }
-    }
-    if (entries.length > before) {
-      sources.add('Open-Meteo');
-    }
-  }
-
-  if (air.status === 'fulfilled') {
-    const result = air.value?.results?.[0];
-    const measurement = result?.measurements?.find((m) => typeof m.value === 'number');
-    if (measurement) {
-      const unit = measurement.unit ?? 'µg/m³';
-      entries.push({ label: 'PM₂.₅ concentration', value: `${measurement.value.toFixed(1)} ${unit}` });
-      sources.add('OpenAQ');
-    }
-  }
-
-  if (emissions.status === 'fulfilled') {
-    const record = Array.isArray(emissions.value) ? emissions.value[0] : null;
-    const average = record && typeof record.average === 'number' ? record.average : record && typeof record.value === 'number' ? record.value : null;
-    if (typeof average === 'number') {
-      entries.push({ label: 'CO column density', value: `${average.toFixed(3)} mol/m²` });
-      sources.add('Emissions API');
-    }
-  }
-
-  return { entries, sources: Array.from(sources) };
-}
-
-async function fetchJson(url, timeout) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`Request failed with ${response.status}`);
-    }
-    return await response.json();
-  } finally {
-    clearTimeout(id);
-  }
-}
 
 function updateDaylight() {
   if (!daylightDial || !sunriseTimeEl || !sunsetTimeEl || !daylightLengthEl || !daylightStatusEl) {
@@ -707,6 +639,23 @@ function formatDuration(totalSeconds) {
     return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
   }
   return `${minutes}m`;
+}
+
+function formatInsightTimestamp(value) {
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value ?? '');
+    }
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+    return formatter.format(date);
+  } catch (error) {
+    console.error('Unable to format insight timestamp', error);
+    return String(value ?? '');
+  }
 }
 
 function computeSunTimes(date, latitude, longitude) {
