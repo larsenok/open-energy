@@ -321,6 +321,45 @@ body {
   height: 100%;
 }
 
+.sparkline {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.sparkline__baseline {
+  stroke: rgba(148, 163, 184, 0.3);
+  stroke-dasharray: 4 6;
+  stroke-width: 1.25;
+}
+
+.sparkline__segment {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.sparkline__segment--surplus {
+  stroke: #22d3ee;
+}
+
+.sparkline__segment--deficit {
+  stroke: #f97316;
+}
+
+.sparkline__marker {
+  stroke: rgba(15, 23, 42, 0.55);
+  stroke-width: 1.5;
+}
+
+.sparkline__marker--surplus {
+  fill: #22d3ee;
+}
+
+.sparkline__marker--deficit {
+  fill: #f97316;
+}
+
 .tooltip .insights {
   margin-top: 1.25rem;
   padding-top: 1rem;

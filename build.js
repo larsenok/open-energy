@@ -37,10 +37,14 @@ async function build() {
 
   copyRecursive(PUBLIC_DIR, DIST_DIR);
 
-  const energyData = generateEnergyData();
+  const { energy, insights, cache } = await generateEnergyData();
   const dataDir = join(DIST_DIR, 'data');
   await mkdir(dataDir, { recursive: true });
-  await writeFile(join(dataDir, 'energy.json'), JSON.stringify(energyData, null, 2), 'utf8');
+  await Promise.all([
+    writeFile(join(dataDir, 'energy.json'), JSON.stringify(energy, null, 2), 'utf8'),
+    writeFile(join(dataDir, 'insights.json'), JSON.stringify(insights, null, 2), 'utf8'),
+    writeFile(join(dataDir, 'open-data-cache.json'), JSON.stringify(cache, null, 2), 'utf8')
+  ]);
 
   console.log(`✓ Built static assets in ${DIST_DIR}`);
 }

@@ -5,6 +5,17 @@
   "type": "module",
   "scripts": {
     "build": "node build.js",
-    "start": "node serve.js"
+    "start": "node serve.js",
+    "test": "node scripts/bootstrap-dev-tools.mjs && vitest run",
+    "lint": "node scripts/bootstrap-dev-tools.mjs && npm run lint:eslint && npm run lint:prettier",
+    "lint:eslint": "eslint build.js serve.js public/**/*.js src/**/*.js",
+    "lint:prettier": "prettier --check \"build.js\" \"serve.js\" \"public/**/*.js\" \"src/**/*.js\""
+  },
+  "devDependencies": {
+    "eslint": "file:tools/stubs/eslint",
+    "eslint-config-prettier": "file:tools/stubs/eslint-config-prettier",
+    "eslint-plugin-prettier": "file:tools/stubs/eslint-plugin-prettier",
+    "prettier": "file:tools/stubs/prettier",
+    "vitest": "file:tools/stubs/vitest"
   }
 }
