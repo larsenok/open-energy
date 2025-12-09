@@ -1,4 +1,4 @@
-import { chmod, cp, mkdir, readFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, readFile, rm } from 'node:fs/promises';
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -35,6 +35,7 @@ async function copyStub(name) {
   if (!(await exists(source))) {
     throw new Error(`Stub package not found: ${name}`);
   }
+  await rm(target, { recursive: true, force: true });
   await cp(source, target, { recursive: true, force: true });
 
   const pkgFile = join(source, 'package.json');
