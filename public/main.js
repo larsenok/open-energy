@@ -33,13 +33,17 @@ const factoryStepBtn = document.getElementById('factory-step');
 const factoryResetBtn = document.getElementById('factory-reset');
 const factoryRotateBtn = document.getElementById('factory-rotate');
 const factoryToolButtons = Array.from(document.querySelectorAll('[data-tool]'));
+const factoryInfoButton = document.getElementById('factory-info-button');
+const factoryHelpButton = document.getElementById('factory-help-button');
+const factoryInfoPopup = document.getElementById('factory-info-popup');
+const factoryHelpPopup = document.getElementById('factory-help-popup');
 
 let activeRegionId = null;
 let regions = [];
 let animationFrame = null;
 let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
-const DEFAULT_TAB_ID = 'grid';
+const DEFAULT_TAB_ID = 'factory';
 const DAYLIGHT_TAB_ID = 'daylight';
 const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
 const OSLO_TIME_ZONE = 'Europe/Oslo';
@@ -92,6 +96,8 @@ if (todayDateEl) {
 if (factoryGridEl) {
   setupFactoryBuilder();
 }
+
+setupInfoPopups();
 
 const energyRequest = fetch('data/energy.json').then((response) => {
   if (!response.ok) {
@@ -163,6 +169,49 @@ function switchTab(tabId) {
   if (target === DAYLIGHT_TAB_ID) {
     updateDaylight();
   }
+}
+
+function setupInfoPopups() {
+  const pairs = [
+    [factoryInfoButton, factoryInfoPopup],
+    [factoryHelpButton, factoryHelpPopup],
+  ].filter(([button, popup]) => button && popup);
+
+  if (!pairs.length) return;
+
+  const closePopups = () => {
+    pairs.forEach(([button, popup]) => {
+      popup.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+    });
+  };
+
+  pairs.forEach(([button, popup]) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !popup.hidden;
+      closePopups();
+      if (!isOpen) {
+        popup.hidden = false;
+        button.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    const clickedPair = pairs.some(([button, popup]) =>
+      button.contains(event.target) || popup.contains(event.target)
+    );
+    if (!clickedPair) {
+      closePopups();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closePopups();
+    }
+  });
 }
 
 function renderRegions() {
