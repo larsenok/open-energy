@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at top, #0a1a27 0%, #03080f 55%, #010205 100%);
+  background: radial-gradient(140% 120% at 18% 20%, #191029 0%, #0c0a13 55%, #05060a 100%);
   color: #f1f5f9;
 }
 
@@ -15,14 +15,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1rem, 4vw, 2.75rem);
+  padding: clamp(0.85rem, 4vw, 2.25rem);
+  overflow-x: hidden;
 }
 
 .app-shell {
   display: flex;
   flex-direction: column;
   gap: clamp(0.85rem, 2vw, 1.35rem);
-  width: min(1180px, 100%);
+  width: min(1040px, 100%);
 }
 
 .tabs {
@@ -30,9 +31,9 @@ body {
   align-self: center;
   gap: 0.25rem;
   padding: 0.25rem 0.35rem;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 18px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(14px);
 }
 
@@ -40,7 +41,7 @@ body {
   appearance: none;
   border: none;
   background: transparent;
-  color: rgba(226, 232, 240, 0.7);
+  color: rgba(244, 244, 245, 0.75);
   padding: 0.4rem 0.95rem;
   border-radius: 14px;
   font-family: inherit;
@@ -53,15 +54,15 @@ body {
 
 .tab:hover,
 .tab:focus-visible {
-  background: rgba(30, 64, 175, 0.22);
-  color: rgba(244, 244, 245, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.95);
   outline: none;
 }
 
 .tab.active {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.65), rgba(132, 204, 22, 0.55));
-  color: #0f172a;
-  box-shadow: 0 12px 32px rgba(14, 165, 233, 0.35);
+  background: #f59e0b;
+  color: #0c0a13;
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.35);
 }
 
 [data-panel][hidden] {
@@ -70,15 +71,15 @@ body {
 
 .scene {
   position: relative;
-  width: min(1180px, 100%);
+  width: 100%;
   height: min(860px, 92vh);
   display: grid;
   grid-template-columns: minmax(0, 5.5fr) minmax(320px, 3fr);
   gap: clamp(1.1rem, 3vw, 2rem);
   padding: clamp(1.35rem, 3vw, 2.2rem);
-  background: linear-gradient(145deg, rgba(18, 34, 53, 0.85), rgba(6, 13, 22, 0.92));
+  background: linear-gradient(145deg, rgba(32, 25, 46, 0.9), rgba(10, 10, 18, 0.95));
   border-radius: 26px;
-  box-shadow: 0 38px 110px rgba(15, 23, 42, 0.38);
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.35);
   overflow: visible;
 }
 
@@ -90,10 +91,10 @@ body {
   width: 100%;
   height: 100%;
   min-height: clamp(360px, 48vh, 560px);
-  background: radial-gradient(circle at 35% 30%, rgba(14, 165, 233, 0.08), transparent 32%),
-    radial-gradient(circle at 70% 65%, rgba(132, 204, 22, 0.08), transparent 38%),
-    linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(8, 47, 73, 0.78));
-  box-shadow: inset 0 0 40px rgba(8, 47, 73, 0.45);
+  background: radial-gradient(circle at 35% 30%, rgba(245, 158, 11, 0.08), transparent 32%),
+    radial-gradient(circle at 70% 65%, rgba(34, 197, 94, 0.08), transparent 38%),
+    linear-gradient(145deg, rgba(20, 17, 30, 0.95), rgba(12, 16, 24, 0.85));
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
 }
 
 .map::after {
@@ -440,12 +441,12 @@ body {
 }
 
 .daylight-panel {
-  width: min(1180px, 100%);
+  width: 100%;
   height: min(860px, 92vh);
   padding: clamp(2rem, 5vw, 3rem);
-  background: linear-gradient(160deg, rgba(18, 34, 53, 0.88), rgba(6, 13, 22, 0.95));
+  background: linear-gradient(160deg, rgba(36, 26, 44, 0.9), rgba(8, 11, 18, 0.96));
   border-radius: 32px;
-  box-shadow: 0 48px 140px rgba(15, 23, 42, 0.42);
+  box-shadow: 0 42px 120px rgba(0, 0, 0, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,11 +454,11 @@ body {
 }
 
 .daylight-panel.is-day {
-  background: linear-gradient(165deg, rgba(30, 64, 175, 0.55), rgba(14, 116, 144, 0.25));
+  background: linear-gradient(165deg, rgba(34, 197, 94, 0.4), rgba(248, 180, 0, 0.25));
 }
 
 .daylight-panel.is-night {
-  background: linear-gradient(165deg, rgba(8, 18, 36, 0.88), rgba(2, 6, 12, 0.94));
+  background: linear-gradient(165deg, rgba(10, 12, 20, 0.9), rgba(4, 6, 12, 0.96));
 }
 
 .daylight-card {
@@ -708,13 +709,13 @@ body {
 }
 
 .factory-panel {
-  width: min(1180px, 100%);
+  width: 100%;
   display: grid;
   gap: clamp(1.1rem, 2.5vw, 1.75rem);
-  background: linear-gradient(150deg, rgba(11, 18, 33, 0.95), rgba(6, 12, 22, 0.92));
+  background: linear-gradient(150deg, rgba(24, 18, 34, 0.96), rgba(10, 10, 18, 0.92));
   border-radius: 24px;
-  box-shadow: 0 42px 120px rgba(15, 23, 42, 0.38);
-  padding: clamp(1.25rem, 3vw, 2rem);
+  box-shadow: 0 38px 110px rgba(0, 0, 0, 0.36);
+  padding: clamp(1.1rem, 3vw, 1.85rem);
 }
 
 .factory-hero {
@@ -756,11 +757,11 @@ body {
 }
 
 .factory-controls button {
-  background: rgba(94, 234, 212, 0.12);
-  border: 1px solid rgba(94, 234, 212, 0.4);
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.5);
   border-radius: 10px;
   padding: 0.45rem 0.85rem;
-  color: #e2e8f0;
+  color: #fef3c7;
   cursor: pointer;
   font-weight: 600;
   letter-spacing: 0.005em;
@@ -770,18 +771,18 @@ body {
 
 .factory-controls button:hover,
 .factory-controls button:focus-visible {
-  background: rgba(94, 234, 212, 0.2);
-  border-color: rgba(94, 234, 212, 0.65);
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.75);
   transform: translateY(-1px);
   outline: none;
 }
 
 .factory-target {
   padding: 0.65rem 0.85rem;
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(34, 197, 94, 0.12);
   border-radius: 12px;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  color: #e0f2fe;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #bbf7d0;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1.3;
@@ -796,17 +797,58 @@ body {
 
 .factory-summary {
   padding: 0.85rem 1rem;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  color: rgba(226, 232, 240, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(241, 245, 249, 0.82);
   line-height: 1.45;
   font-size: 0.95rem;
 }
 
+.factory-foldout {
+  margin-top: 0.35rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  padding: 0.4rem 0.4rem 0.8rem;
+}
+
+.factory-foldout summary {
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.factory-foldout summary::-webkit-details-marker {
+  display: none;
+}
+
+.factory-foldout summary::before {
+  content: '▸';
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.factory-foldout[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.factory-foldout-body {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+}
+
 .factory-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
   gap: clamp(1rem, 2.4vw, 1.75rem);
   align-items: start;
 }
@@ -816,11 +858,11 @@ body {
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(6, 1fr);
   gap: 0.3rem;
-  background: radial-gradient(circle at top left, rgba(45, 212, 191, 0.08), transparent 65%);
+  background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.12), transparent 65%);
   padding: 0.6rem;
   border-radius: 18px;
   border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: inset 0 0 24px rgba(8, 47, 73, 0.25);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.28);
   aspect-ratio: 1;
   max-width: 560px;
   width: 100%;
@@ -830,7 +872,7 @@ body {
 .factory-cell {
   position: relative;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(20, 20, 28, 0.7);
   border: 1px solid rgba(148, 163, 184, 0.22);
   color: #e2e8f0;
   display: grid;
@@ -875,11 +917,11 @@ body {
 .factory-toolbar,
 .factory-help,
 .factory-readout {
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   padding: 0.85rem 0.95rem;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
 }
 
 .factory-toolbar h3,
@@ -1148,6 +1190,20 @@ body {
   .factory-grid {
     min-height: 300px;
     max-width: 520px;
+    order: -1;
+  }
+
+  .factory-foldout {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .factory-sidebar {
+    order: 2;
+  }
+
+  .factory-intro {
+    order: 1;
   }
 
   .factory-controls {
