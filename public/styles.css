@@ -743,12 +743,6 @@ body {
   gap: 0.6rem;
 }
 
-.factory-kicker {
-  margin: 0.35rem 0 0.5rem;
-  color: rgba(226, 232, 240, 0.8);
-  font-size: 0.95rem;
-}
-
 .factory-controls {
   display: flex;
   flex-wrap: wrap;
@@ -777,73 +771,34 @@ body {
   outline: none;
 }
 
-.factory-target {
-  padding: 0.65rem 0.85rem;
-  background: rgba(34, 197, 94, 0.12);
-  border-radius: 12px;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #bbf7d0;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 1.3;
-  font-size: 0.95rem;
-}
-
-.factory-status {
-  margin: 0.45rem 0 0;
-  color: rgba(226, 232, 240, 0.8);
-  font-size: 0.95rem;
-}
-
-.factory-summary {
-  padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(241, 245, 249, 0.82);
-  line-height: 1.45;
-  font-size: 0.95rem;
-}
-
-.factory-foldout {
-  margin-top: 0.35rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  color: inherit;
-  padding: 0.4rem 0.4rem 0.8rem;
-}
-
-.factory-foldout summary {
-  cursor: pointer;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.factory-foldout summary::-webkit-details-marker {
-  display: none;
-}
-
-.factory-foldout summary::before {
-  content: '▸';
-  display: inline-block;
-  transition: transform 0.2s ease;
-}
-
-.factory-foldout[open] summary::before {
-  transform: rotate(90deg);
-}
-
-.factory-foldout-body {
+.factory-brief {
   display: grid;
-  gap: 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
   margin-top: 0.4rem;
+}
+
+.factory-brief-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.65rem 0.85rem;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+}
+
+.factory-brief-card .label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.factory-brief-card .value {
+  margin: 0.2rem 0 0;
+  font-size: 0.98rem;
+  color: rgba(226, 232, 240, 0.9);
+  line-height: 1.35;
 }
 
 .factory-layout {
@@ -855,8 +810,8 @@ body {
 
 .factory-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
   gap: 0.3rem;
   background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.12), transparent 65%);
   padding: 0.6rem;
@@ -880,6 +835,7 @@ body {
   padding: 0.25rem;
   cursor: pointer;
   min-height: 54px;
+  aspect-ratio: 1;
   transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1191,11 +1147,6 @@ body {
     min-height: 300px;
     max-width: 520px;
     order: -1;
-  }
-
-  .factory-foldout {
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.04);
   }
 
   .factory-sidebar {

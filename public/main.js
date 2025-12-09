@@ -25,7 +25,6 @@ const factoryStatusEl = document.getElementById('factory-status');
 const factoryTargetEl = document.getElementById('factory-target');
 const factoryTickEl = document.getElementById('factory-tick');
 const factoryCollectorEl = document.getElementById('factory-collector');
-const factorySummaryEl = document.getElementById('factory-summary');
 const factoryDirectionLabel = document.getElementById('factory-direction-label');
 const factoryNewLevelBtn = document.getElementById('factory-new-level');
 const factoryStartBtn = document.getElementById('factory-start');
@@ -37,7 +36,6 @@ const factoryInfoButton = document.getElementById('factory-info-button');
 const factoryHelpButton = document.getElementById('factory-help-button');
 const factoryInfoPopup = document.getElementById('factory-info-popup');
 const factoryHelpPopup = document.getElementById('factory-help-popup');
-const factoryBriefing = document.getElementById('factory-briefing');
 
 let activeRegionId = null;
 let regions = [];
@@ -96,10 +94,6 @@ if (todayDateEl) {
 
 if (factoryGridEl) {
   setupFactoryBuilder();
-}
-
-if (factoryBriefing && window.matchMedia('(max-width: 720px)').matches) {
-  factoryBriefing.removeAttribute('open');
 }
 
 setupInfoPopups();
@@ -855,8 +849,7 @@ function generateFactoryLevel() {
 
   return {
     grid,
-    target: { item: targetItem, count: targetCount, maxTicks },
-    summary: describeFactoryLevel(targetItem, targetCount, maxTicks)
+    target: { item: targetItem, count: targetCount, maxTicks }
   };
 }
 
@@ -921,11 +914,9 @@ function renderFactoryHud(statusOverride) {
   if (!factoryState) return;
   updateFactoryCells();
   const target = factoryState.target;
-  const collected = factoryState.collectorCounts[target.item] ?? 0;
-  factoryTargetEl.textContent = `Goal: deliver ${target.count}× ${target.item} in ${target.maxTicks} ticks`;
+  factoryTargetEl.textContent = `${target.count}× ${target.item} before tick ${target.maxTicks}`;
   factoryTickEl.textContent = String(factoryState.tick);
   factoryStatusEl.textContent = statusOverride || factoryStatusEl.textContent || 'Ready.';
-  factorySummaryEl.textContent = factoryLevel?.summary || '';
   renderCollectorCounts();
 }
 
@@ -984,10 +975,6 @@ function describeCellLabel(cell) {
     return `Processing ${cell.processing.output}`;
   }
   return cell.type;
-}
-
-function describeFactoryLevel(targetItem, targetCount, maxTicks) {
-  return `One target item, ${targetCount} needed, ${maxTicks} tick clock. Spawners use simple parts only; optional furnaces and a splitter are pre-placed to keep layouts compact.`;
 }
 
 function producesTarget(itemType, targetItem) {
