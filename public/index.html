@@ -31,6 +31,17 @@
         >
           Oslo daylight
         </button>
+        <button
+          class="tab"
+          type="button"
+          id="factory-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="factory-panel"
+          data-tab="factory"
+        >
+          Minimalist Factory
+        </button>
       </nav>
       <main class="scene" id="grid-panel" data-panel="grid" role="tabpanel" aria-labelledby="grid-tab">
         <div class="map" id="map"></div>
@@ -111,6 +122,72 @@
             </dl>
             <p class="daylight-status" id="daylight-status">Loading daylight data…</p>
           </div>
+        </div>
+      </section>
+      <section
+        class="factory-panel"
+        data-panel="factory"
+        id="factory-panel"
+        role="tabpanel"
+        aria-labelledby="factory-tab"
+        hidden
+      >
+        <header class="factory-hero">
+          <div class="factory-intro">
+            <p class="eyebrow">Puzzle prototype</p>
+            <h2>Minimalist Factory Builder</h2>
+            <p>
+              Route tiny resources across a 6×6 grid using conveyors, furnaces, splitters, and collectors.
+              Every tick matters: win by reaching the target output before the clock runs out.
+            </p>
+            <div class="factory-controls" aria-label="Factory controls">
+              <button type="button" id="factory-new-level">New level</button>
+              <button type="button" id="factory-start">Start</button>
+              <button type="button" id="factory-step">Step</button>
+              <button type="button" id="factory-reset">Reset layout</button>
+            </div>
+            <div class="factory-target" id="factory-target"></div>
+            <p class="factory-status" id="factory-status">Generate a level to begin.</p>
+          </div>
+          <div class="factory-summary" id="factory-summary"></div>
+        </header>
+        <div class="factory-layout">
+          <div class="factory-grid" id="factory-grid" role="grid" aria-label="Factory grid"></div>
+          <aside class="factory-sidebar">
+            <div class="factory-toolbar" aria-label="Build palette">
+              <h3>Build palette</h3>
+              <div class="tool-grid">
+                <button type="button" data-tool="conveyor" class="tool active">Conveyor</button>
+                <button type="button" data-tool="furnace" class="tool">Furnace</button>
+                <button type="button" data-tool="splitter" class="tool">Splitter</button>
+                <button type="button" data-tool="collector" class="tool">Collector</button>
+                <button type="button" data-tool="erase" class="tool">Eraser</button>
+              </div>
+              <div class="direction-controls">
+                <p>Direction: <span id="factory-direction-label">Right</span></p>
+                <button type="button" id="factory-rotate">Rotate</button>
+              </div>
+            </div>
+            <div class="factory-help">
+              <h3>How it works</h3>
+              <ul>
+                <li>Click a cell to place your selected component. Click again to rotate conveyors, splitters, furnaces, or spawners.</li>
+                <li>Spawners generate one item each tick. Furnaces take one tick to refine ore into usable parts.</li>
+                <li>Splitters alternate left/right outputs relative to their arrow. Collectors tally delivered items.</li>
+                <li>Press Start to run continuously or Step to advance a single tick.</li>
+              </ul>
+            </div>
+            <div class="factory-readout">
+              <div class="stat">
+                <span class="label">Tick</span>
+                <span class="value" id="factory-tick">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Collected</span>
+                <ul id="factory-collector"></ul>
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
     </div>
