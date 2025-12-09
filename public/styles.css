@@ -708,6 +708,266 @@ body {
   text-align: center;
 }
 
+.factory-panel {
+  width: min(1180px, 100%);
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  background: linear-gradient(150deg, rgba(11, 18, 33, 0.95), rgba(6, 12, 22, 0.92));
+  border-radius: 32px;
+  box-shadow: 0 48px 140px rgba(15, 23, 42, 0.42);
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.factory-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  align-items: start;
+}
+
+.factory-intro h2 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.factory-intro p {
+  margin: 0 0 0.75rem;
+  color: rgba(226, 232, 240, 0.85);
+  line-height: 1.6;
+}
+
+.factory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.factory-controls button {
+  background: rgba(94, 234, 212, 0.12);
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
+}
+
+.factory-controls button:hover,
+.factory-controls button:focus-visible {
+  background: rgba(94, 234, 212, 0.2);
+  border-color: rgba(94, 234, 212, 0.65);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.factory-target {
+  padding: 0.85rem 1rem;
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #e0f2fe;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.factory-status {
+  margin: 0.6rem 0 0;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.factory-summary {
+  padding: 1rem 1.2rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: rgba(226, 232, 240, 0.85);
+  line-height: 1.5;
+}
+
+.factory-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.factory-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 0.4rem;
+  background: radial-gradient(circle at top left, rgba(45, 212, 191, 0.08), transparent 65%);
+  padding: 0.75rem;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: inset 0 0 30px rgba(8, 47, 73, 0.25);
+  aspect-ratio: 1;
+}
+
+.factory-cell {
+  position: relative;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  display: grid;
+  place-items: center;
+  padding: 0.3rem;
+  cursor: pointer;
+  min-height: 58px;
+  transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.factory-cell:hover,
+.factory-cell:focus-visible {
+  border-color: rgba(94, 234, 212, 0.6);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.15);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.factory-cell .glyph {
+  font-size: 1.2rem;
+  margin-bottom: 0.15rem;
+}
+
+.factory-cell .label {
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.factory-cell .direction-indicator {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.factory-sidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.factory-toolbar,
+.factory-help,
+.factory-readout {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 18px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.3);
+}
+
+.factory-toolbar h3,
+.factory-help h3 {
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.85);
+  font-size: 0.9rem;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.tool {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #dbeafe;
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
+}
+
+.tool.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(94, 234, 212, 0.55));
+  color: #0b1020;
+  border-color: transparent;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
+}
+
+.tool:hover,
+.tool:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.direction-controls {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.direction-controls button {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.factory-help ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.5rem;
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 0.95rem;
+}
+
+.factory-readout .stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.factory-readout .stat:last-of-type {
+  border-bottom: none;
+}
+
+.factory-readout .label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.factory-readout ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.factory-readout li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: rgba(241, 245, 249, 0.9);
+}
+
+.factory-readout .value {
+  font-weight: 700;
+}
+
 @media (max-width: 960px) {
   .scene {
     grid-template-columns: 1fr;
@@ -741,6 +1001,14 @@ body {
 
   .daylight-timings {
     width: 100%;
+  }
+
+  .factory-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .factory-layout {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -787,5 +1055,17 @@ body {
 
   .tooltip {
     border-radius: 20px;
+  }
+
+  .factory-panel {
+    padding: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .factory-grid {
+    min-height: 360px;
+  }
+
+  .factory-controls {
+    justify-content: center;
   }
 }
