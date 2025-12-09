@@ -12,9 +12,20 @@
         <button
           class="tab active"
           type="button"
-          id="grid-tab"
+          id="factory-tab"
           role="tab"
           aria-selected="true"
+          aria-controls="factory-panel"
+          data-tab="factory"
+        >
+          Factory
+        </button>
+        <button
+          class="tab"
+          type="button"
+          id="grid-tab"
+          role="tab"
+          aria-selected="false"
           aria-controls="grid-panel"
           data-tab="grid"
         >
@@ -31,19 +42,15 @@
         >
           Oslo daylight
         </button>
-        <button
-          class="tab"
-          type="button"
-          id="factory-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="factory-panel"
-          data-tab="factory"
-        >
-          Minimalist Factory
-        </button>
       </nav>
-      <main class="scene" id="grid-panel" data-panel="grid" role="tabpanel" aria-labelledby="grid-tab">
+      <main
+        class="scene"
+        id="grid-panel"
+        data-panel="grid"
+        role="tabpanel"
+        aria-labelledby="grid-tab"
+        hidden
+      >
         <div class="map" id="map"></div>
         <aside class="overlay">
           <header class="title-block">
@@ -130,16 +137,36 @@
         id="factory-panel"
         role="tabpanel"
         aria-labelledby="factory-tab"
-        hidden
       >
         <header class="factory-hero">
           <div class="factory-intro">
-            <p class="eyebrow">Puzzle prototype</p>
-            <h2>Minimalist Factory Builder</h2>
-            <p>
-              Route tiny resources across a 6×6 grid using conveyors, furnaces, splitters, and collectors.
-              Every tick matters: win by reaching the target output before the clock runs out.
-            </p>
+            <div class="intro-heading">
+              <div>
+                <p class="eyebrow">Puzzle prototype</p>
+                <h2>Minimalist Factory</h2>
+              </div>
+              <div class="info-trigger">
+                <button
+                  type="button"
+                  class="info-button"
+                  id="factory-info-button"
+                  aria-expanded="false"
+                  aria-controls="factory-info-popup"
+                  aria-label="Factory info"
+                >
+                  i
+                </button>
+                <div class="info-popup" id="factory-info-popup" hidden>
+                  <p>Route tiny resources quickly on a 6×6 grid.</p>
+                  <ul>
+                    <li>Place parts with the active tool, tap again to rotate.</li>
+                    <li>Furnaces spend one tick to refine ores into usable parts.</li>
+                    <li>Splitters alternate left/right outputs; collectors tally delivered items.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <p class="factory-kicker">Build the shortest path to the target before time runs out.</p>
             <div class="factory-controls" aria-label="Factory controls">
               <button type="button" id="factory-new-level">New level</button>
               <button type="button" id="factory-start">Start</button>
@@ -164,18 +191,32 @@
                 <button type="button" data-tool="erase" class="tool">Eraser</button>
               </div>
               <div class="direction-controls">
-                <p>Direction: <span id="factory-direction-label">Right</span></p>
+                <p>Direction <span id="factory-direction-label">Right</span></p>
                 <button type="button" id="factory-rotate">Rotate</button>
               </div>
             </div>
             <div class="factory-help">
-              <h3>How it works</h3>
-              <ul>
-                <li>Click a cell to place your selected component. Click again to rotate conveyors, splitters, furnaces, or spawners.</li>
-                <li>Spawners generate one item each tick. Furnaces take one tick to refine ore into usable parts.</li>
-                <li>Splitters alternate left/right outputs relative to their arrow. Collectors tally delivered items.</li>
-                <li>Press Start to run continuously or Step to advance a single tick.</li>
-              </ul>
+              <div class="info-trigger help-trigger">
+                <h3>Hints</h3>
+                <button
+                  type="button"
+                  class="info-button"
+                  id="factory-help-button"
+                  aria-expanded="false"
+                  aria-controls="factory-help-popup"
+                  aria-label="Factory hints"
+                >
+                  i
+                </button>
+              </div>
+              <div class="info-popup" id="factory-help-popup" hidden>
+                <ul>
+                  <li>Spawners generate one item each tick.</li>
+                  <li>Furnaces convert ore in place after a tick.</li>
+                  <li>Splitters alternate left/right relative to their arrow.</li>
+                  <li>Use Step for careful debugging before you run.</li>
+                </ul>
+              </div>
             </div>
             <div class="factory-readout">
               <div class="stat">
