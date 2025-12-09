@@ -37,6 +37,7 @@ const factoryInfoButton = document.getElementById('factory-info-button');
 const factoryHelpButton = document.getElementById('factory-help-button');
 const factoryInfoPopup = document.getElementById('factory-info-popup');
 const factoryHelpPopup = document.getElementById('factory-help-popup');
+const factoryBriefing = document.getElementById('factory-briefing');
 
 let activeRegionId = null;
 let regions = [];
@@ -95,6 +96,10 @@ if (todayDateEl) {
 
 if (factoryGridEl) {
   setupFactoryBuilder();
+}
+
+if (factoryBriefing && window.matchMedia('(max-width: 720px)').matches) {
+  factoryBriefing.removeAttribute('open');
 }
 
 setupInfoPopups();

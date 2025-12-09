@@ -173,10 +173,15 @@
               <button type="button" id="factory-step">Step</button>
               <button type="button" id="factory-reset">Reset layout</button>
             </div>
-            <div class="factory-target" id="factory-target"></div>
-            <p class="factory-status" id="factory-status">Generate a level to begin.</p>
+            <details class="factory-foldout" id="factory-briefing" open>
+              <summary aria-label="Toggle factory briefing">Briefing & goals</summary>
+              <div class="factory-foldout-body">
+                <div class="factory-target" id="factory-target"></div>
+                <p class="factory-status" id="factory-status">Generate a level to begin.</p>
+                <div class="factory-summary" id="factory-summary"></div>
+              </div>
+            </details>
           </div>
-          <div class="factory-summary" id="factory-summary"></div>
         </header>
         <div class="factory-layout">
           <div class="factory-grid" id="factory-grid" role="grid" aria-label="Factory grid"></div>
