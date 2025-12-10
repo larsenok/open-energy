@@ -48,8 +48,15 @@ const DEFAULT_TAB_ID = 'factory';
 const DAYLIGHT_TAB_ID = 'daylight';
 const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
 const OSLO_TIME_ZONE = 'Europe/Oslo';
-const DAYLIGHT_REFRESH_INTERVAL = 60 * 1000;
+const DAYLIGHT_REFRESH_INTERVAL = 1000;
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const SKY_TRANSITION_SECONDS = 90 * 60;
+const SKY_COLORS = {
+  night: [6, 10, 26],
+  sunrise: [246, 153, 168],
+  day: [125, 211, 252],
+  sunset: [217, 119, 74]
+};
 
 const insightsByRegion = new Map();
 let insightsUpdatedAt = null;
@@ -530,13 +537,16 @@ function updateDaylight() {
   if (!zonedNow) {
     daylightDial.style.setProperty('--hour-angle', '0deg');
     daylightDial.style.setProperty('--minute-angle', '0deg');
+    daylightDial.style.setProperty('--second-angle', '0deg');
     return;
   }
 
   const hourAngle = ((zonedNow.hours % 12) + zonedNow.minutes / 60 + zonedNow.seconds / 3600) * 30;
   const minuteAngle = (zonedNow.minutes + zonedNow.seconds / 60) * 6;
+  const secondAngle = zonedNow.seconds * 6;
   daylightDial.style.setProperty('--hour-angle', `${hourAngle}deg`);
   daylightDial.style.setProperty('--minute-angle', `${minuteAngle}deg`);
+  daylightDial.style.setProperty('--second-angle', `${secondAngle}deg`);
 
   const baseDate = new Date(Date.UTC(zonedNow.year, zonedNow.month - 1, zonedNow.day, 12));
   const sunTimes = computeSunTimes(baseDate, OSLO_COORDS.latitude, OSLO_COORDS.longitude);
@@ -609,6 +619,16 @@ function updateDaylight() {
   daylightDial.style.setProperty('--daylight-end', `${sunsetAngle}deg`);
   daylightDial.style.setProperty('--sun-angle', `${nowAngle}deg`);
 
+  const skyColors = resolveDialSkyColors({
+    nowSeconds,
+    sunriseSeconds: sunriseSecondsNormalized,
+    sunsetSeconds: sunsetSecondsAdjusted,
+    secondsInDay
+  });
+
+  daylightDial.style.setProperty('--dial-sky-inner', skyColors.inner);
+  daylightDial.style.setProperty('--dial-sky-outer', skyColors.outer);
+
   const isDay = sunriseSeconds <= sunsetSeconds
     ? nowSeconds >= sunriseSeconds && nowSeconds < sunsetSeconds
     : nowSeconds >= sunriseSeconds || nowSeconds < sunsetSeconds;
@@ -626,6 +646,50 @@ function updateDaylight() {
   } else {
     daylightStatusEl.textContent = untilSunrise === 0 ? 'Dawn is breaking in Oslo.' : `Sunrise in ${formatDuration(untilSunrise)}.`;
   }
+}
+
+function resolveDialSkyColors({ nowSeconds, sunriseSeconds, sunsetSeconds, secondsInDay }) {
+  const transition = SKY_TRANSITION_SECONDS;
+  let sunriseStart = sunriseSeconds - transition;
+  let sunriseEnd = sunriseSeconds + transition;
+  let sunsetStart = sunsetSeconds - transition;
+  let sunsetEnd = sunsetSeconds + transition;
+  let current = nowSeconds;
+
+  if (current < sunriseStart) {
+    current += secondsInDay;
+    sunriseStart += secondsInDay;
+    sunriseSeconds += secondsInDay;
+    sunriseEnd += secondsInDay;
+    sunsetStart += secondsInDay;
+    sunsetSeconds += secondsInDay;
+    sunsetEnd += secondsInDay;
+  }
+
+  const segments = [
+    { start: sunriseStart, end: sunriseSeconds, from: SKY_COLORS.night, to: SKY_COLORS.sunrise },
+    { start: sunriseSeconds, end: sunriseEnd, from: SKY_COLORS.sunrise, to: SKY_COLORS.day },
+    { start: sunriseEnd, end: sunsetStart, solid: SKY_COLORS.day },
+    { start: sunsetStart, end: sunsetSeconds, from: SKY_COLORS.day, to: SKY_COLORS.sunset },
+    { start: sunsetSeconds, end: sunsetEnd, from: SKY_COLORS.sunset, to: SKY_COLORS.night }
+  ];
+
+  let base = SKY_COLORS.night;
+  for (const segment of segments) {
+    if (current >= segment.start && current <= segment.end) {
+      if (segment.solid) {
+        base = segment.solid;
+      } else {
+        const progress = Math.min(1, Math.max(0, (current - segment.start) / (segment.end - segment.start)));
+        base = mixColors(segment.from, segment.to, progress);
+      }
+      break;
+    }
+  }
+
+  const inner = toRgbString(mixColors(base, [255, 255, 255], 0.15));
+  const outer = toRgbString(mixColors(base, [0, 0, 0], 0.2));
+  return { inner, outer };
 }
 
 function updateTodayDate() {
@@ -718,6 +782,15 @@ function formatDuration(totalSeconds) {
     return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
   }
   return `${minutes}m`;
+}
+
+function mixColors(start, end, amount) {
+  const clamped = Math.min(1, Math.max(0, amount));
+  return start.map((value, index) => Math.round(value + (end[index] - value) * clamped));
+}
+
+function toRgbString(color) {
+  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
 function formatInsightTimestamp(value) {
