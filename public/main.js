@@ -568,12 +568,13 @@ function updateDaylight() {
   const sunsetSeconds = toSeconds(sunsetParts);
   const nowSeconds = toSeconds({ hours: zonedNow.hours, minutes: zonedNow.minutes, seconds: zonedNow.seconds });
   const secondsInDay = 24 * 60 * 60;
+  const secondsOnDial = 12 * 60 * 60;
 
   const daylightSeconds = Math.max(0, Math.round((sunTimes.sunset - sunTimes.sunrise) / 1000));
   daylightLengthEl.textContent = formatDuration(daylightSeconds);
 
   const normalizeSeconds = (value) => ((value % secondsInDay) + secondsInDay) % secondsInDay;
-  const toAngle = (value) => (value / secondsInDay) * 360;
+  const toDialAngle = (value) => (value / secondsOnDial) * 360;
   const ensureForwardProgress = (angle, previous) => {
     let result = angle;
     while (result < previous) {
@@ -592,12 +593,12 @@ function updateDaylight() {
   const sunriseTransitionEndSeconds = Math.min(sunsetSecondsAdjusted, sunriseSecondsNormalized + transitionSeconds);
   const sunsetTransitionStartSeconds = Math.max(sunriseSecondsNormalized, sunsetSecondsAdjusted - transitionSeconds);
 
-  const sunriseAngle = toAngle(sunriseSecondsNormalized);
-  const sunriseTransitionEndAngle = ensureForwardProgress(toAngle(sunriseTransitionEndSeconds), sunriseAngle);
-  const sunsetTransitionStartAngle = ensureForwardProgress(toAngle(sunsetTransitionStartSeconds), sunriseTransitionEndAngle);
-  const sunsetAngle = ensureForwardProgress(toAngle(sunsetSecondsAdjusted), sunsetTransitionStartAngle);
+  const sunriseAngle = toDialAngle(sunriseSecondsNormalized);
+  const sunriseTransitionEndAngle = ensureForwardProgress(toDialAngle(sunriseTransitionEndSeconds), sunriseAngle);
+  const sunsetTransitionStartAngle = ensureForwardProgress(toDialAngle(sunsetTransitionStartSeconds), sunriseTransitionEndAngle);
+  const sunsetAngle = ensureForwardProgress(toDialAngle(sunsetSecondsAdjusted), sunsetTransitionStartAngle);
 
-  let nowAngle = toAngle(normalizeSeconds(nowSeconds));
+  let nowAngle = toDialAngle(normalizeSeconds(nowSeconds));
   if (sunsetAngle > 360 && nowAngle < sunriseAngle) {
     nowAngle += 360;
   }
