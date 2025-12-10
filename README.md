@@ -14,10 +14,10 @@ An immersive, static world map that visualises electricity generation and demand
 
 The new tab introduces a playable prototype called **Minimalist Factory Builder**, designed around short, human-solvable production puzzles.
 
-- **Goal** – route resources on a 6×6 grid until your collectors receive enough of the target item before the tick limit expires.
+- **Goal** – route resources on a 6×6 grid until your collectors receive enough of the target item; finishing sooner improves your tick score.
 - **Components** – empty tiles hold nothing; conveyors move items one tile per tick and can be rotated; spawners create one item every tick; furnaces accept an item, wait exactly one tick, and output the processed result; splitters alternate left/right output relative to their arrow each time they dispatch an item; collectors tally delivered items by type.
 - **Tick simulation** – every tick resolves furnace outputs, spawns new items, starts any available furnace processing, then moves items forward if their conveyors point to a valid target. Collectors immediately bank items; furnaces refuse input if already busy so timing matters.
-- **Win condition** – each level defines a single `targetItem`, `targetCount`, and `maxTicks`. You win when collector totals for the target item reach the required count while the global tick counter is still at or below `maxTicks`. Exceed the tick limit first and the attempt fails.
+- **Win condition** – each level defines a single `targetItem`, `targetCount`, and `maxTicks`. You win once collector totals reach the required count, and `maxTicks` now acts as a par-style benchmark instead of a hard fail state.
 - **Auto-level generator** – clicking “New level” rolls a fresh puzzle: it picks exactly one simple target item (`ironPlate` or `wire`), a target count between 5–20, and a max tick budget between 15–40. It places one or two spawners at random open tiles, optionally seeds up to two furnaces and one splitter, and always keeps the field sparse. Levels avoid blocked tiles, multi-item goals, part limits, or multi-step crafting: at most one furnace step is required, and spawners only emit basic resources.
 - **Why it stays compact** – the tiny grid, capped component counts, and single-item objective mean solutions rely on clean routing instead of sprawling construction. Timing the one-tick furnace delay and the alternating splitter keeps puzzles interesting without overwhelming the player.
 
