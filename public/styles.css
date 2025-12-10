@@ -497,12 +497,18 @@ body {
   --sun-angle: 0deg;
   --hour-angle: 0deg;
   --minute-angle: 0deg;
+  --second-angle: 0deg;
   --dial-radius: 46%;
+  --dial-sky-inner: #0b1224;
+  --dial-sky-outer: #050814;
   width: clamp(220px, 30vw, 280px);
   aspect-ratio: 1;
   border-radius: 50%;
   position: relative;
-  background: conic-gradient(
+  background-color: var(--dial-sky-outer);
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, var(--dial-sky-inner) 88%, #fff 12%), var(--dial-sky-outer)),
+    conic-gradient(
       from 0deg,
       rgba(15, 23, 42, 0.9) 0deg var(--daylight-start),
       rgba(251, 146, 60, 0.55) var(--daylight-start) var(--sunrise-end),
@@ -524,6 +530,26 @@ body {
 
 .daylight-panel.is-night .daylight-dial {
   box-shadow: 0 35px 70px rgba(15, 23, 42, 0.45);
+}
+
+.dial-markers {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from -90deg,
+      rgba(148, 163, 184, 0.28) 0deg 0.6deg,
+      transparent 0.6deg 6deg
+    ),
+    conic-gradient(
+      from -90deg,
+      rgba(241, 245, 249, 0.55) 0deg 2deg,
+      transparent 2deg 30deg
+    );
+  mask: radial-gradient(circle at center, transparent 0 82%, #000 82% 100%);
+  -webkit-mask: radial-gradient(circle at center, transparent 0 82%, #000 82% 100%);
+  z-index: 2;
 }
 
 .daylight-dial::before {
@@ -573,9 +599,9 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(var(--hand-width) * 2.1);
+  width: calc(var(--hand-width) * 2.4);
   height: calc(var(--hand-length) + var(--hand-base-size));
-  transform-origin: 50% calc(100% - var(--hand-base-size) * 0.35);
+  transform-origin: 50% 100%;
   transform: translate(-50%, -100%) rotate(var(--hand-angle, 0deg));
   pointer-events: none;
   transition: transform 0.4s ease;
@@ -627,10 +653,19 @@ body {
 .minute-hand {
   --hand-angle: var(--minute-angle, 0deg);
   --hand-width: 4px;
-  --hand-length: calc(var(--dial-radius) * 0.95);
-  --hand-base-size: 16px;
+  --hand-length: calc(var(--dial-radius) * 0.92);
+  --hand-base-size: 18px;
   --hand-fill: linear-gradient(180deg, rgba(203, 213, 225, 0.9), rgba(59, 130, 246, 0.82));
   --hand-shadow: 0 18px 32px rgba(37, 99, 235, 0.28);
+}
+
+.second-hand {
+  --hand-angle: var(--second-angle, 0deg);
+  --hand-width: 2px;
+  --hand-length: calc(var(--dial-radius) * 0.98);
+  --hand-base-size: 14px;
+  --hand-fill: linear-gradient(180deg, rgba(248, 113, 113, 0.95), rgba(239, 68, 68, 0.95));
+  --hand-shadow: 0 16px 30px rgba(239, 68, 68, 0.36);
 }
 
 .dial-center {
