@@ -503,7 +503,7 @@ body {
   border-radius: 50%;
   position: relative;
   background: conic-gradient(
-      from 180deg,
+      from 0deg,
       rgba(15, 23, 42, 0.9) 0deg var(--daylight-start),
       rgba(251, 146, 60, 0.55) var(--daylight-start) var(--sunrise-end),
       rgba(253, 224, 71, 0.45) var(--sunrise-end) var(--sunset-start),
@@ -542,7 +542,7 @@ body {
   inset: -12%;
   border-radius: 50%;
   background: conic-gradient(
-      from 180deg,
+      from 0deg,
       rgba(251, 146, 60, 0.32) var(--daylight-start) var(--sunrise-end),
       transparent var(--sunrise-end) var(--sunset-start),
       rgba(168, 85, 247, 0.32) var(--sunset-start) var(--daylight-end),
@@ -551,7 +551,7 @@ body {
   filter: blur(28px);
   opacity: 0.88;
   mask: conic-gradient(
-      from 180deg,
+      from 0deg,
       transparent 0deg var(--daylight-start),
       white var(--daylight-start) var(--sunrise-end),
       transparent var(--sunrise-end) var(--sunset-start),
@@ -559,7 +559,7 @@ body {
       transparent var(--daylight-end) 360deg
     );
   -webkit-mask: conic-gradient(
-      from 180deg,
+      from 0deg,
       transparent 0deg var(--daylight-start),
       white var(--daylight-start) var(--sunrise-end),
       transparent var(--sunrise-end) var(--sunset-start),
