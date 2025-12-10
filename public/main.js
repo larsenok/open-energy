@@ -794,6 +794,7 @@ function loadFactoryLevel(level) {
     grid: cloneFactoryGrid(level.grid),
     target: level.target,
     tick: 0,
+    completedTick: null,
     collectorCounts: {},
     failed: false,
     won: false
@@ -914,7 +915,7 @@ function renderFactoryHud(statusOverride) {
   if (!factoryState) return;
   updateFactoryCells();
   const target = factoryState.target;
-  factoryTargetEl.textContent = `${target.count}× ${target.item} before tick ${target.maxTicks}`;
+  factoryTargetEl.textContent = `${target.count}× ${target.item} · par ${target.maxTicks} ticks`;
   factoryTickEl.textContent = String(factoryState.tick);
   factoryStatusEl.textContent = statusOverride || factoryStatusEl.textContent || 'Ready.';
   renderCollectorCounts();
@@ -1036,6 +1037,7 @@ function resetFactoryLayout() {
     grid: cloneFactoryGrid(factoryLevel.grid),
     target: { ...factoryLevel.target },
     tick: 0,
+    completedTick: null,
     collectorCounts: {},
     failed: false,
     won: false
@@ -1220,16 +1222,16 @@ function renderCollectorCounts() {
 function evaluateFactoryOutcome() {
   const { item, count, maxTicks } = factoryState.target;
   const collected = factoryState.collectorCounts[item] || 0;
-  if (collected >= count && factoryState.tick <= maxTicks) {
+  if (collected >= count) {
     factoryState.won = true;
+    factoryState.completedTick = factoryState.tick;
     stopFactoryLoop();
-    factoryStatusEl.textContent = 'Victory! Target met within the tick limit.';
+    const parResult = factoryState.completedTick <= maxTicks ? 'You met the par pace.' : 'Over par, but victory nonetheless!';
+    factoryStatusEl.textContent = `Victory! Delivered the target in ${factoryState.completedTick} ticks. ${parResult}`;
     return;
   }
-  if (factoryState.tick > maxTicks && collected < count) {
-    factoryState.failed = true;
-    stopFactoryLoop();
-    factoryStatusEl.textContent = 'Max ticks exceeded before meeting the target.';
+  if (factoryState.tick > maxTicks && !factoryState.failed) {
+    factoryStatusEl.textContent = 'Par exceeded — keep iterating to finish the build.';
   }
 }
 
