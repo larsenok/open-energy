@@ -155,10 +155,20 @@
         <div class="quiz-shell">
           <header class="quiz-header">
             <p class="eyebrow">Pokédex challenge</p>
-            <h2>Original 151 quiz</h2>
-            <p>
-              Name every Kanto Pokémon from memory. Each correct entry locks into the Pokédex grid.
-            </p>
+            <div class="quiz-generation">
+              <label for="quiz-generation">Quiz generation</label>
+              <select id="quiz-generation" name="quiz-generation">
+                <option value="gen1" selected>Gen 1 — Kanto</option>
+                <option value="gen2">Gen 2 — Johto</option>
+                <option value="gen3">Gen 3 — Hoenn</option>
+                <option value="gen4">Gen 4 — Sinnoh</option>
+                <option value="gen5">Gen 5 — Unova</option>
+                <option value="gen6">Gen 6 — Kalos</option>
+                <option value="gen7">Gen 7 — Alola</option>
+                <option value="gen8">Gen 8 — Galar</option>
+                <option value="gen9">Gen 9 — Paldea</option>
+              </select>
+            </div>
           </header>
           <div class="quiz-body">
             <section class="quiz-card quiz-console">
@@ -184,11 +194,9 @@
                   aria-label="Pokémon name"
                   autocomplete="off"
                 />
-                <button type="button" id="quiz-submit">Catch</button>
               </div>
-              <p class="quiz-feedback" id="quiz-feedback">Ready when you are.</p>
+              <p class="quiz-feedback" id="quiz-feedback"></p>
               <div class="quiz-actions">
-                <button type="button" id="quiz-shuffle">Shuffle grid</button>
                 <button type="button" id="quiz-reset">Reset run</button>
               </div>
             </section>
