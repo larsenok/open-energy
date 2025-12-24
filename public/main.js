@@ -401,6 +401,7 @@ function setupQuiz() {
   updateQuizStats();
 
   quizSubmitBtn.addEventListener('click', handleQuizSubmit);
+  quizInputEl.addEventListener('input', handleQuizAutoCheck);
   quizInputEl.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       handleQuizSubmit();
@@ -417,6 +418,18 @@ function setupQuiz() {
 
 function normalizeQuizAnswer(value) {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function handleQuizAutoCheck() {
+  const rawValue = quizInputEl.value.trim();
+  if (!rawValue) return;
+
+  const normalized = normalizeQuizAnswer(rawValue);
+  if (normalized === 'nidoran') return;
+
+  if (quizLookup.has(normalized)) {
+    handleQuizSubmit();
+  }
 }
 
 function handleQuizSubmit() {
