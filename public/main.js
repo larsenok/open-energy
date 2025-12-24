@@ -43,9 +43,7 @@ const quizCountEl = document.getElementById('quiz-count');
 const quizComboEl = document.getElementById('quiz-combo');
 const quizTimerEl = document.getElementById('quiz-timer');
 const quizInputEl = document.getElementById('quiz-input');
-const quizSubmitBtn = document.getElementById('quiz-submit');
 const quizFeedbackEl = document.getElementById('quiz-feedback');
-const quizShuffleBtn = document.getElementById('quiz-shuffle');
 const quizResetBtn = document.getElementById('quiz-reset');
 
 let activeRegionId = null;
@@ -386,7 +384,7 @@ function setupInfoPopups() {
 }
 
 function setupQuiz() {
-  if (!quizGridEl || !quizInputEl || !quizSubmitBtn || !quizFeedbackEl) return;
+  if (!quizGridEl || !quizInputEl || !quizFeedbackEl) return;
 
   POKEMON_LIST.forEach((entry) => {
     if (!entry.name.includes('Nidoran')) {
@@ -400,17 +398,11 @@ function setupQuiz() {
   renderQuizGrid();
   updateQuizStats();
 
-  quizSubmitBtn.addEventListener('click', handleQuizSubmit);
   quizInputEl.addEventListener('input', handleQuizAutoCheck);
   quizInputEl.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       handleQuizSubmit();
     }
-  });
-
-  quizShuffleBtn?.addEventListener('click', () => {
-    quizGridOrder = shuffleArray([...quizGridOrder]);
-    renderQuizGrid();
   });
 
   quizResetBtn?.addEventListener('click', resetQuiz);
@@ -454,7 +446,7 @@ function handleQuizSubmit() {
 
   const pokemonId = quizLookup.get(normalized);
   if (!pokemonId) {
-    setQuizFeedback(`"${rawValue}" is not in the Kanto Pokédex.`, 'error');
+    setQuizFeedback(`"${rawValue}" is not in this Pokédex.`, 'error');
     quizCombo = 0;
     updateQuizStats();
     return;
@@ -556,14 +548,6 @@ function updateQuizTimerDisplay(elapsedMs) {
   const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
   const seconds = String(totalSeconds % 60).padStart(2, '0');
   quizTimerEl.textContent = `${minutes}:${seconds}`;
-}
-
-function shuffleArray(values) {
-  for (let i = values.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [values[i], values[j]] = [values[j], values[i]];
-  }
-  return values;
 }
 
 function renderRegions() {
