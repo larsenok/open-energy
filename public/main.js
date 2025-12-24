@@ -41,7 +41,6 @@ const factoryInfoPopup = document.getElementById('factory-info-popup');
 const factoryHelpPopup = document.getElementById('factory-help-popup');
 const quizGridEl = document.getElementById('quiz-grid');
 const quizCountEl = document.getElementById('quiz-count');
-const quizComboEl = document.getElementById('quiz-combo');
 const quizTimerEl = document.getElementById('quiz-timer');
 const quizInputEl = document.getElementById('quiz-input');
 const quizFeedbackEl = document.getElementById('quiz-feedback');
@@ -86,7 +85,6 @@ const insightsByRegion = new Map();
 let insightsUpdatedAt = null;
 const quizSlots = new Map();
 const quizFound = new Set();
-let quizCombo = 0;
 let quizStartTime = null;
 let quizTimerInterval = null;
 let activeQuizKey = 'gen1';
@@ -94,7 +92,6 @@ let activeQuizEntries = QUIZ_GENERATIONS[activeQuizKey].entries;
 let quizPokemonById = new Map(activeQuizEntries.map((entry) => [entry.id, entry]));
 let quizGridOrder = activeQuizEntries.map((entry) => entry.id);
 const quizLookup = new Map();
-const quizAmbiguous = new Set();
 
 if (tabButtons.length) {
   tabButtons.forEach((button) => {
@@ -276,7 +273,6 @@ function applyQuizGeneration(generationKey, { announce = false } = {}) {
   quizPokemonById = new Map(activeQuizEntries.map((entry) => [entry.id, entry]));
   quizGridOrder = activeQuizEntries.map((entry) => entry.id);
   quizFound.clear();
-  quizCombo = 0;
   quizStartTime = null;
   rebuildQuizLookup();
   renderQuizGrid();
@@ -294,29 +290,15 @@ function applyQuizGeneration(generationKey, { announce = false } = {}) {
 
 function rebuildQuizLookup() {
   quizLookup.clear();
-  quizAmbiguous.clear();
-  const normalizedAnswers = new Set();
   activeQuizEntries.forEach((entry) => {
     if (!entry.name.includes('Nidoran')) {
       const normalizedName = normalizeQuizAnswer(entry.name);
       quizLookup.set(normalizedName, entry.id);
-      normalizedAnswers.add(normalizedName);
     }
     (entry.aliases || []).forEach((alias) => {
       const normalizedAlias = normalizeQuizAnswer(alias);
       quizLookup.set(normalizedAlias, entry.id);
-      normalizedAnswers.add(normalizedAlias);
     });
-  });
-
-  const normalizedList = Array.from(normalizedAnswers);
-  normalizedList.forEach((value) => {
-    for (const other of normalizedList) {
-      if (other !== value && other.startsWith(value)) {
-        quizAmbiguous.add(value);
-        break;
-      }
-    }
   });
 }
 
@@ -329,14 +311,11 @@ function handleQuizAutoCheck() {
   if (!rawValue) return;
 
   const normalized = normalizeQuizAnswer(rawValue);
-  if (normalized === 'nidoran') return;
 
   const pokemonId = quizLookup.get(normalized);
   if (!pokemonId || quizFound.has(pokemonId)) return;
 
-  if (!quizAmbiguous.has(normalized)) {
-    handleQuizSubmit();
-  }
+  handleQuizSubmit();
 }
 
 function handleQuizSubmit() {
@@ -352,17 +331,9 @@ function handleQuizSubmit() {
   quizInputEl.value = '';
   quizInputEl.focus();
 
-  if (normalized === 'nidoran') {
-    setQuizFeedback('Specify Nidoran F or M.', 'warning');
-    quizCombo = 0;
-    updateQuizStats();
-    return;
-  }
-
   const pokemonId = quizLookup.get(normalized);
   if (!pokemonId) {
     setQuizFeedback(`"${rawValue}" is not in this Pokédex.`, 'error');
-    quizCombo = 0;
     updateQuizStats();
     return;
   }
@@ -372,7 +343,6 @@ function handleQuizSubmit() {
   }
 
   quizFound.add(pokemonId);
-  quizCombo += 1;
   revealQuizEntry(pokemonId);
   updateQuizStats();
   setQuizFeedback(`Caught ${quizPokemonById.get(pokemonId).name}!`, 'success');
@@ -418,7 +388,6 @@ function revealQuizEntry(pokemonId) {
 
 function updateQuizStats() {
   if (quizCountEl) quizCountEl.textContent = String(quizFound.size);
-  if (quizComboEl) quizComboEl.textContent = String(quizCombo);
 }
 
 function setQuizFeedback(message, state) {
@@ -428,7 +397,6 @@ function setQuizFeedback(message, state) {
 
 function resetQuiz() {
   quizFound.clear();
-  quizCombo = 0;
   quizGridOrder = activeQuizEntries.map((entry) => entry.id);
   renderQuizGrid();
   updateQuizStats();

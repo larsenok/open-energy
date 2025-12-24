@@ -945,7 +945,7 @@ body {
 
 .quiz-entry .dex-name {
   font-weight: 600;
-  font-size: clamp(0.75rem, 1.6vw, 0.85rem);
+  font-size: clamp(0.525rem, 1.12vw, 0.595rem);
   color: rgba(226, 232, 240, 0.65);
   line-height: 1.2;
   word-break: break-word;
@@ -1411,7 +1411,7 @@ body {
   }
 
   .quiz-entry .dex-name {
-    font-size: 0.82rem;
+    font-size: 0.57rem;
   }
 
   .region {
