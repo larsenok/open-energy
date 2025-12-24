@@ -12,9 +12,20 @@
         <button
           class="tab active"
           type="button"
-          id="factory-tab"
+          id="quiz-tab"
           role="tab"
           aria-selected="true"
+          aria-controls="quiz-panel"
+          data-tab="quiz"
+        >
+          Quiz
+        </button>
+        <button
+          class="tab"
+          type="button"
+          id="factory-tab"
+          role="tab"
+          aria-selected="false"
           aria-controls="factory-panel"
           data-tab="factory"
         >
@@ -41,17 +52,6 @@
           data-tab="daylight"
         >
           Oslo daylight
-        </button>
-        <button
-          class="tab"
-          type="button"
-          id="quiz-tab"
-          role="tab"
-          aria-selected="false"
-          aria-controls="quiz-panel"
-          data-tab="quiz"
-        >
-          Quiz
         </button>
       </nav>
       <main
@@ -150,23 +150,15 @@
         id="quiz-panel"
         role="tabpanel"
         aria-labelledby="quiz-tab"
-        hidden
       >
         <div class="quiz-shell">
           <header class="quiz-header">
             <p class="eyebrow">Pokédex challenge</p>
             <div class="quiz-generation">
-              <label for="quiz-generation">Quiz generation</label>
-              <select id="quiz-generation" name="quiz-generation">
+              <select id="quiz-generation" name="quiz-generation" aria-label="Quiz generation">
                 <option value="gen1" selected>Gen 1 — Kanto</option>
                 <option value="gen2">Gen 2 — Johto</option>
                 <option value="gen3">Gen 3 — Hoenn</option>
-                <option value="gen4">Gen 4 — Sinnoh</option>
-                <option value="gen5">Gen 5 — Unova</option>
-                <option value="gen6">Gen 6 — Kalos</option>
-                <option value="gen7">Gen 7 — Alola</option>
-                <option value="gen8">Gen 8 — Galar</option>
-                <option value="gen9">Gen 9 — Paldea</option>
               </select>
             </div>
           </header>
@@ -175,7 +167,7 @@
               <div class="quiz-stats">
                 <div>
                   <p class="label">Caught</p>
-                  <p class="value"><span id="quiz-count">0</span> / 151</p>
+                  <p class="value"><span id="quiz-count">0</span> / <span id="quiz-total">151</span></p>
                 </div>
                 <div>
                   <p class="label">Combo</p>
@@ -210,6 +202,7 @@
         id="factory-panel"
         role="tabpanel"
         aria-labelledby="factory-tab"
+        hidden
       >
         <header class="factory-hero">
           <div class="factory-intro">
