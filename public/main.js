@@ -45,13 +45,15 @@ const quizTimerEl = document.getElementById('quiz-timer');
 const quizInputEl = document.getElementById('quiz-input');
 const quizFeedbackEl = document.getElementById('quiz-feedback');
 const quizResetBtn = document.getElementById('quiz-reset');
+const quizGenerationEl = document.getElementById('quiz-generation');
+const quizTotalEl = document.getElementById('quiz-total');
 
 let activeRegionId = null;
 let regions = [];
 let animationFrame = null;
 let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
-const DEFAULT_TAB_ID = 'factory';
+const DEFAULT_TAB_ID = 'quiz';
 const DAYLIGHT_TAB_ID = 'daylight';
 const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
 const OSLO_TIME_ZONE = 'Europe/Oslo';
@@ -64,7 +66,7 @@ const SKY_COLORS = {
   day: [125, 211, 252],
   sunset: [217, 119, 74]
 };
-const POKEMON_LIST = [
+const GEN1_POKEMON = [
   { id: 1, name: 'Bulbasaur' },
   { id: 2, name: 'Ivysaur' },
   { id: 3, name: 'Venusaur' },
@@ -217,7 +219,259 @@ const POKEMON_LIST = [
   { id: 150, name: 'Mewtwo' },
   { id: 151, name: 'Mew' },
 ];
-const POKEMON_BY_ID = new Map(POKEMON_LIST.map((entry) => [entry.id, entry]));
+const GEN2_POKEMON = [
+  { id: 152, name: 'Chikorita' },
+  { id: 153, name: 'Bayleef' },
+  { id: 154, name: 'Meganium' },
+  { id: 155, name: 'Cyndaquil' },
+  { id: 156, name: 'Quilava' },
+  { id: 157, name: 'Typhlosion' },
+  { id: 158, name: 'Totodile' },
+  { id: 159, name: 'Croconaw' },
+  { id: 160, name: 'Feraligatr' },
+  { id: 161, name: 'Sentret' },
+  { id: 162, name: 'Furret' },
+  { id: 163, name: 'Hoothoot' },
+  { id: 164, name: 'Noctowl' },
+  { id: 165, name: 'Ledyba' },
+  { id: 166, name: 'Ledian' },
+  { id: 167, name: 'Spinarak' },
+  { id: 168, name: 'Ariados' },
+  { id: 169, name: 'Crobat' },
+  { id: 170, name: 'Chinchou' },
+  { id: 171, name: 'Lanturn' },
+  { id: 172, name: 'Pichu' },
+  { id: 173, name: 'Cleffa' },
+  { id: 174, name: 'Igglybuff' },
+  { id: 175, name: 'Togepi' },
+  { id: 176, name: 'Togetic' },
+  { id: 177, name: 'Natu' },
+  { id: 178, name: 'Xatu' },
+  { id: 179, name: 'Mareep' },
+  { id: 180, name: 'Flaaffy' },
+  { id: 181, name: 'Ampharos' },
+  { id: 182, name: 'Bellossom' },
+  { id: 183, name: 'Marill' },
+  { id: 184, name: 'Azumarill' },
+  { id: 185, name: 'Sudowoodo' },
+  { id: 186, name: 'Politoed' },
+  { id: 187, name: 'Hoppip' },
+  { id: 188, name: 'Skiploom' },
+  { id: 189, name: 'Jumpluff' },
+  { id: 190, name: 'Aipom' },
+  { id: 191, name: 'Sunkern' },
+  { id: 192, name: 'Sunflora' },
+  { id: 193, name: 'Yanma' },
+  { id: 194, name: 'Wooper' },
+  { id: 195, name: 'Quagsire' },
+  { id: 196, name: 'Espeon' },
+  { id: 197, name: 'Umbreon' },
+  { id: 198, name: 'Murkrow' },
+  { id: 199, name: 'Slowking' },
+  { id: 200, name: 'Misdreavus' },
+  { id: 201, name: 'Unown' },
+  { id: 202, name: 'Wobbuffet' },
+  { id: 203, name: 'Girafarig' },
+  { id: 204, name: 'Pineco' },
+  { id: 205, name: 'Forretress' },
+  { id: 206, name: 'Dunsparce' },
+  { id: 207, name: 'Gligar' },
+  { id: 208, name: 'Steelix' },
+  { id: 209, name: 'Snubbull' },
+  { id: 210, name: 'Granbull' },
+  { id: 211, name: 'Qwilfish' },
+  { id: 212, name: 'Scizor' },
+  { id: 213, name: 'Shuckle' },
+  { id: 214, name: 'Heracross' },
+  { id: 215, name: 'Sneasel' },
+  { id: 216, name: 'Teddiursa' },
+  { id: 217, name: 'Ursaring' },
+  { id: 218, name: 'Slugma' },
+  { id: 219, name: 'Magcargo' },
+  { id: 220, name: 'Swinub' },
+  { id: 221, name: 'Piloswine' },
+  { id: 222, name: 'Corsola' },
+  { id: 223, name: 'Remoraid' },
+  { id: 224, name: 'Octillery' },
+  { id: 225, name: 'Delibird' },
+  { id: 226, name: 'Mantine' },
+  { id: 227, name: 'Skarmory' },
+  { id: 228, name: 'Houndour' },
+  { id: 229, name: 'Houndoom' },
+  { id: 230, name: 'Kingdra' },
+  { id: 231, name: 'Phanpy' },
+  { id: 232, name: 'Donphan' },
+  { id: 233, name: 'Porygon2', aliases: ['porygon 2'] },
+  { id: 234, name: 'Stantler' },
+  { id: 235, name: 'Smeargle' },
+  { id: 236, name: 'Tyrogue' },
+  { id: 237, name: 'Hitmontop' },
+  { id: 238, name: 'Smoochum' },
+  { id: 239, name: 'Elekid' },
+  { id: 240, name: 'Magby' },
+  { id: 241, name: 'Miltank' },
+  { id: 242, name: 'Blissey' },
+  { id: 243, name: 'Raikou' },
+  { id: 244, name: 'Entei' },
+  { id: 245, name: 'Suicune' },
+  { id: 246, name: 'Larvitar' },
+  { id: 247, name: 'Pupitar' },
+  { id: 248, name: 'Tyranitar' },
+  { id: 249, name: 'Lugia' },
+  { id: 250, name: 'Ho-Oh', aliases: ['hooh'] },
+  { id: 251, name: 'Celebi' },
+];
+const GEN3_POKEMON = [
+  { id: 252, name: 'Treecko' },
+  { id: 253, name: 'Grovyle' },
+  { id: 254, name: 'Sceptile' },
+  { id: 255, name: 'Torchic' },
+  { id: 256, name: 'Combusken' },
+  { id: 257, name: 'Blaziken' },
+  { id: 258, name: 'Mudkip' },
+  { id: 259, name: 'Marshtomp' },
+  { id: 260, name: 'Swampert' },
+  { id: 261, name: 'Poochyena' },
+  { id: 262, name: 'Mightyena' },
+  { id: 263, name: 'Zigzagoon' },
+  { id: 264, name: 'Linoone' },
+  { id: 265, name: 'Wurmple' },
+  { id: 266, name: 'Silcoon' },
+  { id: 267, name: 'Beautifly' },
+  { id: 268, name: 'Cascoon' },
+  { id: 269, name: 'Dustox' },
+  { id: 270, name: 'Lotad' },
+  { id: 271, name: 'Lombre' },
+  { id: 272, name: 'Ludicolo' },
+  { id: 273, name: 'Seedot' },
+  { id: 274, name: 'Nuzleaf' },
+  { id: 275, name: 'Shiftry' },
+  { id: 276, name: 'Taillow' },
+  { id: 277, name: 'Swellow' },
+  { id: 278, name: 'Wingull' },
+  { id: 279, name: 'Pelipper' },
+  { id: 280, name: 'Ralts' },
+  { id: 281, name: 'Kirlia' },
+  { id: 282, name: 'Gardevoir' },
+  { id: 283, name: 'Surskit' },
+  { id: 284, name: 'Masquerain' },
+  { id: 285, name: 'Shroomish' },
+  { id: 286, name: 'Breloom' },
+  { id: 287, name: 'Slakoth' },
+  { id: 288, name: 'Vigoroth' },
+  { id: 289, name: 'Slaking' },
+  { id: 290, name: 'Nincada' },
+  { id: 291, name: 'Ninjask' },
+  { id: 292, name: 'Shedinja' },
+  { id: 293, name: 'Whismur' },
+  { id: 294, name: 'Loudred' },
+  { id: 295, name: 'Exploud' },
+  { id: 296, name: 'Makuhita' },
+  { id: 297, name: 'Hariyama' },
+  { id: 298, name: 'Azurill' },
+  { id: 299, name: 'Nosepass' },
+  { id: 300, name: 'Skitty' },
+  { id: 301, name: 'Delcatty' },
+  { id: 302, name: 'Sableye' },
+  { id: 303, name: 'Mawile' },
+  { id: 304, name: 'Aron' },
+  { id: 305, name: 'Lairon' },
+  { id: 306, name: 'Aggron' },
+  { id: 307, name: 'Meditite' },
+  { id: 308, name: 'Medicham' },
+  { id: 309, name: 'Electrike' },
+  { id: 310, name: 'Manectric' },
+  { id: 311, name: 'Plusle' },
+  { id: 312, name: 'Minun' },
+  { id: 313, name: 'Volbeat' },
+  { id: 314, name: 'Illumise' },
+  { id: 315, name: 'Roselia' },
+  { id: 316, name: 'Gulpin' },
+  { id: 317, name: 'Swalot' },
+  { id: 318, name: 'Carvanha' },
+  { id: 319, name: 'Sharpedo' },
+  { id: 320, name: 'Wailmer' },
+  { id: 321, name: 'Wailord' },
+  { id: 322, name: 'Numel' },
+  { id: 323, name: 'Camerupt' },
+  { id: 324, name: 'Torkoal' },
+  { id: 325, name: 'Spoink' },
+  { id: 326, name: 'Grumpig' },
+  { id: 327, name: 'Spinda' },
+  { id: 328, name: 'Trapinch' },
+  { id: 329, name: 'Vibrava' },
+  { id: 330, name: 'Flygon' },
+  { id: 331, name: 'Cacnea' },
+  { id: 332, name: 'Cacturne' },
+  { id: 333, name: 'Swablu' },
+  { id: 334, name: 'Altaria' },
+  { id: 335, name: 'Zangoose' },
+  { id: 336, name: 'Seviper' },
+  { id: 337, name: 'Lunatone' },
+  { id: 338, name: 'Solrock' },
+  { id: 339, name: 'Barboach' },
+  { id: 340, name: 'Whiscash' },
+  { id: 341, name: 'Corphish' },
+  { id: 342, name: 'Crawdaunt' },
+  { id: 343, name: 'Baltoy' },
+  { id: 344, name: 'Claydol' },
+  { id: 345, name: 'Lileep' },
+  { id: 346, name: 'Cradily' },
+  { id: 347, name: 'Anorith' },
+  { id: 348, name: 'Armaldo' },
+  { id: 349, name: 'Feebas' },
+  { id: 350, name: 'Milotic' },
+  { id: 351, name: 'Castform' },
+  { id: 352, name: 'Kecleon' },
+  { id: 353, name: 'Shuppet' },
+  { id: 354, name: 'Banette' },
+  { id: 355, name: 'Duskull' },
+  { id: 356, name: 'Dusclops' },
+  { id: 357, name: 'Tropius' },
+  { id: 358, name: 'Chimecho' },
+  { id: 359, name: 'Absol' },
+  { id: 360, name: 'Wynaut' },
+  { id: 361, name: 'Snorunt' },
+  { id: 362, name: 'Glalie' },
+  { id: 363, name: 'Spheal' },
+  { id: 364, name: 'Sealeo' },
+  { id: 365, name: 'Walrein' },
+  { id: 366, name: 'Clamperl' },
+  { id: 367, name: 'Huntail' },
+  { id: 368, name: 'Gorebyss' },
+  { id: 369, name: 'Relicanth' },
+  { id: 370, name: 'Luvdisc' },
+  { id: 371, name: 'Bagon' },
+  { id: 372, name: 'Shelgon' },
+  { id: 373, name: 'Salamence' },
+  { id: 374, name: 'Beldum' },
+  { id: 375, name: 'Metang' },
+  { id: 376, name: 'Metagross' },
+  { id: 377, name: 'Regirock' },
+  { id: 378, name: 'Regice' },
+  { id: 379, name: 'Registeel' },
+  { id: 380, name: 'Latias' },
+  { id: 381, name: 'Latios' },
+  { id: 382, name: 'Kyogre' },
+  { id: 383, name: 'Groudon' },
+  { id: 384, name: 'Rayquaza' },
+  { id: 385, name: 'Jirachi' },
+  { id: 386, name: 'Deoxys' },
+];
+const QUIZ_GENERATIONS = {
+  gen1: {
+    label: 'Gen 1 — Kanto',
+    entries: GEN1_POKEMON,
+  },
+  gen2: {
+    label: 'Gen 2 — Johto',
+    entries: GEN2_POKEMON,
+  },
+  gen3: {
+    label: 'Gen 3 — Hoenn',
+    entries: GEN3_POKEMON,
+  },
+};
 
 const insightsByRegion = new Map();
 let insightsUpdatedAt = null;
@@ -226,9 +480,12 @@ const quizFound = new Set();
 let quizCombo = 0;
 let quizStartTime = null;
 let quizTimerInterval = null;
-let quizGridOrder = POKEMON_LIST.map((entry) => entry.id);
+let activeQuizKey = 'gen1';
+let activeQuizEntries = QUIZ_GENERATIONS[activeQuizKey].entries;
+let quizPokemonById = new Map(activeQuizEntries.map((entry) => [entry.id, entry]));
+let quizGridOrder = activeQuizEntries.map((entry) => entry.id);
 const quizLookup = new Map();
-const POKEMON_TOTAL = POKEMON_LIST.length;
+const quizAmbiguous = new Set();
 
 if (tabButtons.length) {
   tabButtons.forEach((button) => {
@@ -386,17 +643,8 @@ function setupInfoPopups() {
 function setupQuiz() {
   if (!quizGridEl || !quizInputEl || !quizFeedbackEl) return;
 
-  POKEMON_LIST.forEach((entry) => {
-    if (!entry.name.includes('Nidoran')) {
-      quizLookup.set(normalizeQuizAnswer(entry.name), entry.id);
-    }
-    (entry.aliases || []).forEach((alias) => {
-      quizLookup.set(normalizeQuizAnswer(alias), entry.id);
-    });
-  });
-
-  renderQuizGrid();
-  updateQuizStats();
+  const defaultGeneration = quizGenerationEl?.value || activeQuizKey;
+  applyQuizGeneration(defaultGeneration);
 
   quizInputEl.addEventListener('input', handleQuizAutoCheck);
   quizInputEl.addEventListener('keydown', (event) => {
@@ -406,6 +654,61 @@ function setupQuiz() {
   });
 
   quizResetBtn?.addEventListener('click', resetQuiz);
+  quizGenerationEl?.addEventListener('change', (event) => {
+    const { value } = event.target;
+    applyQuizGeneration(value, { announce: true });
+  });
+}
+
+function applyQuizGeneration(generationKey, { announce = false } = {}) {
+  const generation = QUIZ_GENERATIONS[generationKey] || QUIZ_GENERATIONS.gen1;
+  activeQuizKey = generationKey in QUIZ_GENERATIONS ? generationKey : 'gen1';
+  activeQuizEntries = generation.entries;
+  quizPokemonById = new Map(activeQuizEntries.map((entry) => [entry.id, entry]));
+  quizGridOrder = activeQuizEntries.map((entry) => entry.id);
+  quizFound.clear();
+  quizCombo = 0;
+  quizStartTime = null;
+  rebuildQuizLookup();
+  renderQuizGrid();
+  updateQuizStats();
+  quizInputEl.value = '';
+  stopQuizTimer();
+  updateQuizTimerDisplay(0);
+  if (quizTotalEl) quizTotalEl.textContent = String(activeQuizEntries.length);
+  if (announce) {
+    setQuizFeedback(`Region switched to ${generation.label}.`, 'info');
+  } else {
+    setQuizFeedback('', '');
+  }
+}
+
+function rebuildQuizLookup() {
+  quizLookup.clear();
+  quizAmbiguous.clear();
+  const normalizedAnswers = new Set();
+  activeQuizEntries.forEach((entry) => {
+    if (!entry.name.includes('Nidoran')) {
+      const normalizedName = normalizeQuizAnswer(entry.name);
+      quizLookup.set(normalizedName, entry.id);
+      normalizedAnswers.add(normalizedName);
+    }
+    (entry.aliases || []).forEach((alias) => {
+      const normalizedAlias = normalizeQuizAnswer(alias);
+      quizLookup.set(normalizedAlias, entry.id);
+      normalizedAnswers.add(normalizedAlias);
+    });
+  });
+
+  const normalizedList = Array.from(normalizedAnswers);
+  normalizedList.forEach((value) => {
+    for (const other of normalizedList) {
+      if (other !== value && other.startsWith(value)) {
+        quizAmbiguous.add(value);
+        break;
+      }
+    }
+  });
 }
 
 function normalizeQuizAnswer(value) {
@@ -419,7 +722,7 @@ function handleQuizAutoCheck() {
   const normalized = normalizeQuizAnswer(rawValue);
   if (normalized === 'nidoran') return;
 
-  if (quizLookup.has(normalized)) {
+  if (quizLookup.has(normalized) && !quizAmbiguous.has(normalized)) {
     handleQuizSubmit();
   }
 }
@@ -453,7 +756,7 @@ function handleQuizSubmit() {
   }
 
   if (quizFound.has(pokemonId)) {
-    setQuizFeedback(`Already caught ${POKEMON_BY_ID.get(pokemonId).name}.`, 'info');
+    setQuizFeedback(`Already caught ${quizPokemonById.get(pokemonId).name}.`, 'info');
     updateQuizStats();
     return;
   }
@@ -462,9 +765,9 @@ function handleQuizSubmit() {
   quizCombo += 1;
   revealQuizEntry(pokemonId);
   updateQuizStats();
-  setQuizFeedback(`Caught ${POKEMON_BY_ID.get(pokemonId).name}!`, 'success');
+  setQuizFeedback(`Caught ${quizPokemonById.get(pokemonId).name}!`, 'success');
 
-  if (quizFound.size === POKEMON_TOTAL) {
+  if (quizFound.size === activeQuizEntries.length) {
     setQuizFeedback('Pokédex complete! Legendary memory unlocked.', 'success');
     stopQuizTimer();
   }
@@ -474,7 +777,7 @@ function renderQuizGrid() {
   quizGridEl.textContent = '';
   quizSlots.clear();
   quizGridOrder.forEach((id) => {
-    const entry = POKEMON_BY_ID.get(id);
+    const entry = quizPokemonById.get(id);
     if (!entry) return;
     const card = document.createElement('div');
     card.className = 'quiz-entry';
@@ -495,7 +798,7 @@ function renderQuizGrid() {
 function revealQuizEntry(pokemonId) {
   const slot = quizSlots.get(pokemonId);
   if (!slot) return;
-  const entry = POKEMON_BY_ID.get(pokemonId);
+  const entry = quizPokemonById.get(pokemonId);
   const nameEl = slot.querySelector('.dex-name');
   if (nameEl) {
     nameEl.textContent = entry ? entry.name : '???';
@@ -516,7 +819,7 @@ function setQuizFeedback(message, state) {
 function resetQuiz() {
   quizFound.clear();
   quizCombo = 0;
-  quizGridOrder = POKEMON_LIST.map((entry) => entry.id);
+  quizGridOrder = activeQuizEntries.map((entry) => entry.id);
   renderQuizGrid();
   updateQuizStats();
   quizInputEl.value = '';
