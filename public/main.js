@@ -38,6 +38,15 @@ const factoryInfoButton = document.getElementById('factory-info-button');
 const factoryHelpButton = document.getElementById('factory-help-button');
 const factoryInfoPopup = document.getElementById('factory-info-popup');
 const factoryHelpPopup = document.getElementById('factory-help-popup');
+const quizGridEl = document.getElementById('quiz-grid');
+const quizCountEl = document.getElementById('quiz-count');
+const quizComboEl = document.getElementById('quiz-combo');
+const quizTimerEl = document.getElementById('quiz-timer');
+const quizInputEl = document.getElementById('quiz-input');
+const quizSubmitBtn = document.getElementById('quiz-submit');
+const quizFeedbackEl = document.getElementById('quiz-feedback');
+const quizShuffleBtn = document.getElementById('quiz-shuffle');
+const quizResetBtn = document.getElementById('quiz-reset');
 
 let activeRegionId = null;
 let regions = [];
@@ -57,9 +66,171 @@ const SKY_COLORS = {
   day: [125, 211, 252],
   sunset: [217, 119, 74]
 };
+const POKEMON_LIST = [
+  { id: 1, name: 'Bulbasaur' },
+  { id: 2, name: 'Ivysaur' },
+  { id: 3, name: 'Venusaur' },
+  { id: 4, name: 'Charmander' },
+  { id: 5, name: 'Charmeleon' },
+  { id: 6, name: 'Charizard' },
+  { id: 7, name: 'Squirtle' },
+  { id: 8, name: 'Wartortle' },
+  { id: 9, name: 'Blastoise' },
+  { id: 10, name: 'Caterpie' },
+  { id: 11, name: 'Metapod' },
+  { id: 12, name: 'Butterfree' },
+  { id: 13, name: 'Weedle' },
+  { id: 14, name: 'Kakuna' },
+  { id: 15, name: 'Beedrill' },
+  { id: 16, name: 'Pidgey' },
+  { id: 17, name: 'Pidgeotto' },
+  { id: 18, name: 'Pidgeot' },
+  { id: 19, name: 'Rattata' },
+  { id: 20, name: 'Raticate' },
+  { id: 21, name: 'Spearow' },
+  { id: 22, name: 'Fearow' },
+  { id: 23, name: 'Ekans' },
+  { id: 24, name: 'Arbok' },
+  { id: 25, name: 'Pikachu' },
+  { id: 26, name: 'Raichu' },
+  { id: 27, name: 'Sandshrew' },
+  { id: 28, name: 'Sandslash' },
+  { id: 29, name: 'Nidoran♀', aliases: ['nidoran f', 'nidoran female'] },
+  { id: 30, name: 'Nidorina' },
+  { id: 31, name: 'Nidoqueen' },
+  { id: 32, name: 'Nidoran♂', aliases: ['nidoran m', 'nidoran male'] },
+  { id: 33, name: 'Nidorino' },
+  { id: 34, name: 'Nidoking' },
+  { id: 35, name: 'Clefairy' },
+  { id: 36, name: 'Clefable' },
+  { id: 37, name: 'Vulpix' },
+  { id: 38, name: 'Ninetales' },
+  { id: 39, name: 'Jigglypuff' },
+  { id: 40, name: 'Wigglytuff' },
+  { id: 41, name: 'Zubat' },
+  { id: 42, name: 'Golbat' },
+  { id: 43, name: 'Oddish' },
+  { id: 44, name: 'Gloom' },
+  { id: 45, name: 'Vileplume' },
+  { id: 46, name: 'Paras' },
+  { id: 47, name: 'Parasect' },
+  { id: 48, name: 'Venonat' },
+  { id: 49, name: 'Venomoth' },
+  { id: 50, name: 'Diglett' },
+  { id: 51, name: 'Dugtrio' },
+  { id: 52, name: 'Meowth' },
+  { id: 53, name: 'Persian' },
+  { id: 54, name: 'Psyduck' },
+  { id: 55, name: 'Golduck' },
+  { id: 56, name: 'Mankey' },
+  { id: 57, name: 'Primeape' },
+  { id: 58, name: 'Growlithe' },
+  { id: 59, name: 'Arcanine' },
+  { id: 60, name: 'Poliwag' },
+  { id: 61, name: 'Poliwhirl' },
+  { id: 62, name: 'Poliwrath' },
+  { id: 63, name: 'Abra' },
+  { id: 64, name: 'Kadabra' },
+  { id: 65, name: 'Alakazam' },
+  { id: 66, name: 'Machop' },
+  { id: 67, name: 'Machoke' },
+  { id: 68, name: 'Machamp' },
+  { id: 69, name: 'Bellsprout' },
+  { id: 70, name: 'Weepinbell' },
+  { id: 71, name: 'Victreebel' },
+  { id: 72, name: 'Tentacool' },
+  { id: 73, name: 'Tentacruel' },
+  { id: 74, name: 'Geodude' },
+  { id: 75, name: 'Graveler' },
+  { id: 76, name: 'Golem' },
+  { id: 77, name: 'Ponyta' },
+  { id: 78, name: 'Rapidash' },
+  { id: 79, name: 'Slowpoke' },
+  { id: 80, name: 'Slowbro' },
+  { id: 81, name: 'Magnemite' },
+  { id: 82, name: 'Magneton' },
+  { id: 83, name: "Farfetch'd", aliases: ['farfetchd'] },
+  { id: 84, name: 'Doduo' },
+  { id: 85, name: 'Dodrio' },
+  { id: 86, name: 'Seel' },
+  { id: 87, name: 'Dewgong' },
+  { id: 88, name: 'Grimer' },
+  { id: 89, name: 'Muk' },
+  { id: 90, name: 'Shellder' },
+  { id: 91, name: 'Cloyster' },
+  { id: 92, name: 'Gastly' },
+  { id: 93, name: 'Haunter' },
+  { id: 94, name: 'Gengar' },
+  { id: 95, name: 'Onix' },
+  { id: 96, name: 'Drowzee' },
+  { id: 97, name: 'Hypno' },
+  { id: 98, name: 'Krabby' },
+  { id: 99, name: 'Kingler' },
+  { id: 100, name: 'Voltorb' },
+  { id: 101, name: 'Electrode' },
+  { id: 102, name: 'Exeggcute' },
+  { id: 103, name: 'Exeggutor' },
+  { id: 104, name: 'Cubone' },
+  { id: 105, name: 'Marowak' },
+  { id: 106, name: 'Hitmonlee' },
+  { id: 107, name: 'Hitmonchan' },
+  { id: 108, name: 'Lickitung' },
+  { id: 109, name: 'Koffing' },
+  { id: 110, name: 'Weezing' },
+  { id: 111, name: 'Rhyhorn' },
+  { id: 112, name: 'Rhydon' },
+  { id: 113, name: 'Chansey' },
+  { id: 114, name: 'Tangela' },
+  { id: 115, name: 'Kangaskhan' },
+  { id: 116, name: 'Horsea' },
+  { id: 117, name: 'Seadra' },
+  { id: 118, name: 'Goldeen' },
+  { id: 119, name: 'Seaking' },
+  { id: 120, name: 'Staryu' },
+  { id: 121, name: 'Starmie' },
+  { id: 122, name: 'Mr. Mime', aliases: ['mr mime', 'mrmime'] },
+  { id: 123, name: 'Scyther' },
+  { id: 124, name: 'Jynx' },
+  { id: 125, name: 'Electabuzz' },
+  { id: 126, name: 'Magmar' },
+  { id: 127, name: 'Pinsir' },
+  { id: 128, name: 'Tauros' },
+  { id: 129, name: 'Magikarp' },
+  { id: 130, name: 'Gyarados' },
+  { id: 131, name: 'Lapras' },
+  { id: 132, name: 'Ditto' },
+  { id: 133, name: 'Eevee' },
+  { id: 134, name: 'Vaporeon' },
+  { id: 135, name: 'Jolteon' },
+  { id: 136, name: 'Flareon' },
+  { id: 137, name: 'Porygon' },
+  { id: 138, name: 'Omanyte' },
+  { id: 139, name: 'Omastar' },
+  { id: 140, name: 'Kabuto' },
+  { id: 141, name: 'Kabutops' },
+  { id: 142, name: 'Aerodactyl' },
+  { id: 143, name: 'Snorlax' },
+  { id: 144, name: 'Articuno' },
+  { id: 145, name: 'Zapdos' },
+  { id: 146, name: 'Moltres' },
+  { id: 147, name: 'Dratini' },
+  { id: 148, name: 'Dragonair' },
+  { id: 149, name: 'Dragonite' },
+  { id: 150, name: 'Mewtwo' },
+  { id: 151, name: 'Mew' },
+];
+const POKEMON_BY_ID = new Map(POKEMON_LIST.map((entry) => [entry.id, entry]));
 
 const insightsByRegion = new Map();
 let insightsUpdatedAt = null;
+const quizSlots = new Map();
+const quizFound = new Set();
+let quizCombo = 0;
+let quizStartTime = null;
+let quizTimerInterval = null;
+let quizGridOrder = POKEMON_LIST.map((entry) => entry.id);
+const quizLookup = new Map();
+const POKEMON_TOTAL = POKEMON_LIST.length;
 
 if (tabButtons.length) {
   tabButtons.forEach((button) => {
@@ -97,6 +268,7 @@ setupFactoryBuilder({
 });
 
 setupInfoPopups();
+setupQuiz();
 
 const energyRequest = fetch('data/energy.json').then((response) => {
   if (!response.ok) {
@@ -211,6 +383,174 @@ function setupInfoPopups() {
       closePopups();
     }
   });
+}
+
+function setupQuiz() {
+  if (!quizGridEl || !quizInputEl || !quizSubmitBtn || !quizFeedbackEl) return;
+
+  POKEMON_LIST.forEach((entry) => {
+    if (!entry.name.includes('Nidoran')) {
+      quizLookup.set(normalizeQuizAnswer(entry.name), entry.id);
+    }
+    (entry.aliases || []).forEach((alias) => {
+      quizLookup.set(normalizeQuizAnswer(alias), entry.id);
+    });
+  });
+
+  renderQuizGrid();
+  updateQuizStats();
+
+  quizSubmitBtn.addEventListener('click', handleQuizSubmit);
+  quizInputEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      handleQuizSubmit();
+    }
+  });
+
+  quizShuffleBtn?.addEventListener('click', () => {
+    quizGridOrder = shuffleArray([...quizGridOrder]);
+    renderQuizGrid();
+  });
+
+  quizResetBtn?.addEventListener('click', resetQuiz);
+}
+
+function normalizeQuizAnswer(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function handleQuizSubmit() {
+  const rawValue = quizInputEl.value.trim();
+  if (!rawValue) return;
+
+  if (!quizStartTime) {
+    quizStartTime = Date.now();
+    startQuizTimer();
+  }
+
+  const normalized = normalizeQuizAnswer(rawValue);
+  quizInputEl.value = '';
+  quizInputEl.focus();
+
+  if (normalized === 'nidoran') {
+    setQuizFeedback('Specify Nidoran F or M.', 'warning');
+    quizCombo = 0;
+    updateQuizStats();
+    return;
+  }
+
+  const pokemonId = quizLookup.get(normalized);
+  if (!pokemonId) {
+    setQuizFeedback(`"${rawValue}" is not in the Kanto Pokédex.`, 'error');
+    quizCombo = 0;
+    updateQuizStats();
+    return;
+  }
+
+  if (quizFound.has(pokemonId)) {
+    setQuizFeedback(`Already caught ${POKEMON_BY_ID.get(pokemonId).name}.`, 'info');
+    updateQuizStats();
+    return;
+  }
+
+  quizFound.add(pokemonId);
+  quizCombo += 1;
+  revealQuizEntry(pokemonId);
+  updateQuizStats();
+  setQuizFeedback(`Caught ${POKEMON_BY_ID.get(pokemonId).name}!`, 'success');
+
+  if (quizFound.size === POKEMON_TOTAL) {
+    setQuizFeedback('Pokédex complete! Legendary memory unlocked.', 'success');
+    stopQuizTimer();
+  }
+}
+
+function renderQuizGrid() {
+  quizGridEl.textContent = '';
+  quizSlots.clear();
+  quizGridOrder.forEach((id) => {
+    const entry = POKEMON_BY_ID.get(id);
+    if (!entry) return;
+    const card = document.createElement('div');
+    card.className = 'quiz-entry';
+    card.dataset.pokemonId = String(entry.id);
+    card.innerHTML = `
+      <span class="dex-number">#${String(entry.id).padStart(3, '0')}</span>
+      <span class="dex-name">???</span>
+      <span class="dex-glow" aria-hidden="true"></span>
+    `;
+    quizGridEl.appendChild(card);
+    quizSlots.set(entry.id, card);
+    if (quizFound.has(entry.id)) {
+      revealQuizEntry(entry.id);
+    }
+  });
+}
+
+function revealQuizEntry(pokemonId) {
+  const slot = quizSlots.get(pokemonId);
+  if (!slot) return;
+  const entry = POKEMON_BY_ID.get(pokemonId);
+  const nameEl = slot.querySelector('.dex-name');
+  if (nameEl) {
+    nameEl.textContent = entry ? entry.name : '???';
+  }
+  slot.classList.add('caught');
+}
+
+function updateQuizStats() {
+  if (quizCountEl) quizCountEl.textContent = String(quizFound.size);
+  if (quizComboEl) quizComboEl.textContent = String(quizCombo);
+}
+
+function setQuizFeedback(message, state) {
+  quizFeedbackEl.textContent = message;
+  quizFeedbackEl.dataset.state = state || '';
+}
+
+function resetQuiz() {
+  quizFound.clear();
+  quizCombo = 0;
+  quizGridOrder = POKEMON_LIST.map((entry) => entry.id);
+  renderQuizGrid();
+  updateQuizStats();
+  quizInputEl.value = '';
+  setQuizFeedback('Pokédex wiped. New run ready.', 'info');
+  stopQuizTimer();
+  quizStartTime = null;
+  updateQuizTimerDisplay(0);
+}
+
+function startQuizTimer() {
+  stopQuizTimer();
+  quizTimerInterval = window.setInterval(() => {
+    if (!quizStartTime) return;
+    const elapsed = Date.now() - quizStartTime;
+    updateQuizTimerDisplay(elapsed);
+  }, 500);
+}
+
+function stopQuizTimer() {
+  if (quizTimerInterval) {
+    clearInterval(quizTimerInterval);
+    quizTimerInterval = null;
+  }
+}
+
+function updateQuizTimerDisplay(elapsedMs) {
+  if (!quizTimerEl) return;
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  quizTimerEl.textContent = `${minutes}:${seconds}`;
+}
+
+function shuffleArray(values) {
+  for (let i = values.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [values[i], values[j]] = [values[j], values[i]];
+  }
+  return values;
 }
 
 function renderRegions() {

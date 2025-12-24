@@ -42,6 +42,17 @@
         >
           Oslo daylight
         </button>
+        <button
+          class="tab"
+          type="button"
+          id="quiz-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="quiz-panel"
+          data-tab="quiz"
+        >
+          Quiz
+        </button>
       </nav>
       <main
         class="scene"
@@ -130,6 +141,59 @@
               </div>
             </dl>
             <p class="daylight-status" id="daylight-status">Loading daylight data…</p>
+          </div>
+        </div>
+      </section>
+      <section
+        class="quiz-panel"
+        data-panel="quiz"
+        id="quiz-panel"
+        role="tabpanel"
+        aria-labelledby="quiz-tab"
+        hidden
+      >
+        <div class="quiz-shell">
+          <header class="quiz-header">
+            <p class="eyebrow">Pokédex challenge</p>
+            <h2>Original 151 quiz</h2>
+            <p>
+              Name every Kanto Pokémon from memory. Each correct entry locks into the Pokédex grid.
+            </p>
+          </header>
+          <div class="quiz-body">
+            <section class="quiz-card quiz-console">
+              <div class="quiz-stats">
+                <div>
+                  <p class="label">Caught</p>
+                  <p class="value"><span id="quiz-count">0</span> / 151</p>
+                </div>
+                <div>
+                  <p class="label">Combo</p>
+                  <p class="value" id="quiz-combo">0</p>
+                </div>
+                <div>
+                  <p class="label">Timer</p>
+                  <p class="value" id="quiz-timer">00:00</p>
+                </div>
+              </div>
+              <div class="quiz-input-row">
+                <input
+                  type="text"
+                  id="quiz-input"
+                  placeholder="Type a Pokémon name"
+                  aria-label="Pokémon name"
+                  autocomplete="off"
+                />
+                <button type="button" id="quiz-submit">Catch</button>
+              </div>
+              <p class="quiz-feedback" id="quiz-feedback">Ready when you are.</p>
+              <div class="quiz-actions">
+                <button type="button" id="quiz-shuffle">Shuffle grid</button>
+                <button type="button" id="quiz-reset">Reset run</button>
+              </div>
+              <p class="quiz-hint">Tip: punctuation is optional. “Mr Mime” and “Farfetchd” both work.</p>
+            </section>
+            <section class="quiz-card quiz-grid" id="quiz-grid" aria-label="Pokédex grid"></section>
           </div>
         </div>
       </section>
