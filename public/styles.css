@@ -1374,11 +1374,13 @@ body {
 @media (max-width: 720px) {
   body {
     align-items: flex-start;
+    padding: 0.6rem;
   }
 
   .scene {
     width: 100%;
     border-radius: 24px;
+    padding: 0.9rem;
   }
 
   .title-block {
@@ -1395,8 +1397,17 @@ body {
     min-height: clamp(420px, 70vh, 720px);
   }
 
+  .quiz-panel {
+    padding: 0.85rem;
+  }
+
+  .quiz-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
   .quiz-entry {
-    padding: 0.5rem 0.55rem;
+    padding: 0.45rem 0.5rem;
     min-height: 64px;
   }
 
@@ -1405,7 +1416,7 @@ body {
   }
 
   .quiz-entry .dex-name {
-    font-size: 0.57rem;
+    font-size: 0.6rem;
   }
 
   .region {
