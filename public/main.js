@@ -345,7 +345,7 @@ function handleQuizSubmit() {
   quizFound.add(pokemonId);
   revealQuizEntry(pokemonId);
   updateQuizStats();
-  setQuizFeedback(`Caught ${quizPokemonById.get(pokemonId).name}!`, 'success');
+  setQuizFeedback(`${quizPokemonById.get(pokemonId).name}!`, 'success');
 
   if (quizFound.size === activeQuizEntries.length) {
     setQuizFeedback('Pokédex complete! Legendary memory unlocked.', 'success');
