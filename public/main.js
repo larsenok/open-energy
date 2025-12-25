@@ -47,6 +47,15 @@ const quizFeedbackEl = document.getElementById('quiz-feedback');
 const quizResetBtn = document.getElementById('quiz-reset');
 const quizGenerationEl = document.getElementById('quiz-generation');
 const quizTotalEl = document.getElementById('quiz-total');
+const lockboxBox = document.getElementById('lockbox-box');
+const lockboxDial = document.getElementById('lockbox-dial');
+const lockboxDialWindow = document.getElementById('lockbox-dial-window');
+const lockboxDialCenter = document.getElementById('lockbox-dial-center');
+const lockboxGlass = document.getElementById('lockbox-glass');
+const lockboxCode = document.getElementById('lockbox-code');
+const lockboxPanelSlide = document.getElementById('lockbox-panel-slide');
+const lockboxSlot = document.getElementById('lockbox-slot');
+const lockboxScrew = document.getElementById('lockbox-screw');
 
 let activeRegionId = null;
 let regions = [];
@@ -130,6 +139,7 @@ setupFactoryBuilder({
 
 setupInfoPopups();
 setupQuiz();
+setupLockbox();
 
 const energyRequest = fetch('data/energy.json').then((response) => {
   if (!response.ok) {
@@ -201,6 +211,272 @@ function switchTab(tabId) {
   if (target === DAYLIGHT_TAB_ID) {
     updateDaylight();
   }
+}
+
+function setupLockbox() {
+  if (
+    !lockboxBox ||
+    !lockboxDial ||
+    !lockboxDialWindow ||
+    !lockboxDialCenter ||
+    !lockboxGlass ||
+    !lockboxCode ||
+    !lockboxPanelSlide ||
+    !lockboxSlot ||
+    !lockboxScrew
+  ) {
+    return;
+  }
+
+  const targetCodeValue = 428;
+  const targetCode = String(targetCodeValue).padStart(3, '0');
+  lockboxCode.textContent = targetCode;
+
+  let dialAngle = 0;
+  let dialPointerId = null;
+  let dialStartAngle = 0;
+  let dialStartRotation = 0;
+  let panelPointerId = null;
+  let panelStartX = 0;
+  let panelOffset = 0;
+  let screwPointerId = null;
+  let screwOffset = { x: 0, y: 0 };
+  let screwPosition = { x: 0, y: 0 };
+  let panelUnlocked = false;
+  let slotExposed = false;
+  let boxUnlocked = false;
+  let fogTimeout = null;
+  let panelMaxOffset = lockboxBox.getBoundingClientRect().width * 0.18;
+  let slotSnapThreshold = lockboxBox.getBoundingClientRect().width * 0.04;
+
+  const dialRect = () => lockboxDial.getBoundingClientRect();
+  const faceRect = () => lockboxBox.getBoundingClientRect();
+
+  function normalizeAngle(angle) {
+    const normalized = angle % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
+
+  function dialValueFromAngle(angle) {
+    const normalized = normalizeAngle(angle);
+    const value = Math.floor((normalized / 360) * 1000);
+    return Math.min(999, value);
+  }
+
+  function updateDial() {
+    const normalized = normalizeAngle(dialAngle);
+    lockboxDial.style.transform = `rotate(${normalized}deg)`;
+    const value = dialValueFromAngle(normalized);
+    lockboxDialWindow.textContent = String(value).padStart(3, '0');
+    panelUnlocked = value === targetCodeValue;
+    lockboxBox.classList.toggle('panel-ready', panelUnlocked);
+  }
+
+  function setPanelOffset(nextOffset) {
+    panelOffset = Math.min(panelMaxOffset, Math.max(0, nextOffset));
+    lockboxPanelSlide.style.transform = `translateX(${panelOffset}px)`;
+    slotExposed = panelOffset >= panelMaxOffset * 0.7;
+    lockboxBox.classList.toggle('slot-exposed', slotExposed);
+  }
+
+  function updateScrewPosition(position) {
+    screwPosition = position;
+    lockboxScrew.style.left = `${position.x}px`;
+    lockboxScrew.style.top = `${position.y}px`;
+  }
+
+  function maybeUnlock() {
+    if (!slotExposed || boxUnlocked) {
+      return;
+    }
+    const slotRect = lockboxSlot.getBoundingClientRect();
+    const screwRect = lockboxScrew.getBoundingClientRect();
+    const slotCenter = {
+      x: slotRect.left + slotRect.width / 2,
+      y: slotRect.top + slotRect.height / 2
+    };
+    const screwCenter = {
+      x: screwRect.left + screwRect.width / 2,
+      y: screwRect.top + screwRect.height / 2
+    };
+    const distance = Math.hypot(slotCenter.x - screwCenter.x, slotCenter.y - screwCenter.y);
+    if (distance <= slotSnapThreshold) {
+      const faceBounds = faceRect();
+      updateScrewPosition({
+        x: slotCenter.x - faceBounds.left - screwRect.width / 2,
+        y: slotCenter.y - faceBounds.top - screwRect.height / 2
+      });
+      boxUnlocked = true;
+      lockboxBox.classList.add('is-unlocked');
+    }
+  }
+
+  lockboxDial.addEventListener('pointerdown', (event) => {
+    if (boxUnlocked) {
+      return;
+    }
+    dialPointerId = event.pointerId;
+    lockboxDial.setPointerCapture(event.pointerId);
+    const rect = dialRect();
+    const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    dialStartAngle = Math.atan2(event.clientY - center.y, event.clientX - center.x) * (180 / Math.PI);
+    dialStartRotation = dialAngle;
+  });
+
+  lockboxDial.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== dialPointerId || boxUnlocked) {
+      return;
+    }
+    const rect = dialRect();
+    const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    const currentAngle = Math.atan2(event.clientY - center.y, event.clientX - center.x) * (180 / Math.PI);
+    dialAngle = dialStartRotation + (currentAngle - dialStartAngle);
+    updateDial();
+  });
+
+  lockboxDial.addEventListener('pointerup', (event) => {
+    if (event.pointerId !== dialPointerId) {
+      return;
+    }
+    lockboxDial.releasePointerCapture(event.pointerId);
+    dialPointerId = null;
+  });
+
+  lockboxDial.addEventListener('pointercancel', (event) => {
+    if (event.pointerId !== dialPointerId) {
+      return;
+    }
+    lockboxDial.releasePointerCapture(event.pointerId);
+    dialPointerId = null;
+  });
+
+  lockboxDialCenter.addEventListener('click', () => {
+    if (boxUnlocked) {
+      return;
+    }
+    dialAngle = normalizeAngle(Math.round(dialAngle / 9) * 9);
+    updateDial();
+  });
+
+  lockboxGlass.addEventListener('pointerdown', () => {
+    if (boxUnlocked) {
+      return;
+    }
+    if (fogTimeout) {
+      window.clearTimeout(fogTimeout);
+    }
+    fogTimeout = window.setTimeout(() => {
+      lockboxGlass.classList.add('fogged');
+      fogTimeout = null;
+    }, 2000);
+  });
+
+  lockboxGlass.addEventListener('pointerup', () => {
+    if (fogTimeout) {
+      window.clearTimeout(fogTimeout);
+      fogTimeout = null;
+    }
+  });
+
+  lockboxGlass.addEventListener('pointerleave', () => {
+    if (fogTimeout) {
+      window.clearTimeout(fogTimeout);
+      fogTimeout = null;
+    }
+  });
+
+  lockboxPanelSlide.addEventListener('pointerdown', (event) => {
+    if (!panelUnlocked || boxUnlocked) {
+      return;
+    }
+    panelPointerId = event.pointerId;
+    panelStartX = event.clientX - panelOffset;
+    lockboxPanelSlide.setPointerCapture(event.pointerId);
+  });
+
+  lockboxPanelSlide.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== panelPointerId || boxUnlocked) {
+      return;
+    }
+    setPanelOffset(event.clientX - panelStartX);
+  });
+
+  lockboxPanelSlide.addEventListener('pointerup', (event) => {
+    if (event.pointerId !== panelPointerId) {
+      return;
+    }
+    lockboxPanelSlide.releasePointerCapture(event.pointerId);
+    panelPointerId = null;
+  });
+
+  lockboxPanelSlide.addEventListener('pointercancel', (event) => {
+    if (event.pointerId !== panelPointerId) {
+      return;
+    }
+    lockboxPanelSlide.releasePointerCapture(event.pointerId);
+    panelPointerId = null;
+  });
+
+  lockboxScrew.addEventListener('pointerdown', (event) => {
+    if (boxUnlocked) {
+      return;
+    }
+    screwPointerId = event.pointerId;
+    const screwRect = lockboxScrew.getBoundingClientRect();
+    screwOffset = {
+      x: event.clientX - screwRect.left,
+      y: event.clientY - screwRect.top
+    };
+    lockboxScrew.classList.add('dragging');
+    lockboxScrew.setPointerCapture(event.pointerId);
+  });
+
+  lockboxScrew.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== screwPointerId || boxUnlocked) {
+      return;
+    }
+    const bounds = faceRect();
+    const screwRect = lockboxScrew.getBoundingClientRect();
+    const nextPosition = {
+      x: event.clientX - bounds.left - screwOffset.x,
+      y: event.clientY - bounds.top - screwOffset.y
+    };
+    nextPosition.x = Math.min(Math.max(0, nextPosition.x), bounds.width - screwRect.width);
+    nextPosition.y = Math.min(Math.max(0, nextPosition.y), bounds.height - screwRect.height);
+    updateScrewPosition(nextPosition);
+  });
+
+  lockboxScrew.addEventListener('pointerup', (event) => {
+    if (event.pointerId !== screwPointerId) {
+      return;
+    }
+    lockboxScrew.releasePointerCapture(event.pointerId);
+    lockboxScrew.classList.remove('dragging');
+    screwPointerId = null;
+    maybeUnlock();
+  });
+
+  lockboxScrew.addEventListener('pointercancel', (event) => {
+    if (event.pointerId !== screwPointerId) {
+      return;
+    }
+    lockboxScrew.releasePointerCapture(event.pointerId);
+    lockboxScrew.classList.remove('dragging');
+    screwPointerId = null;
+  });
+
+  updateDial();
+  const initialScrewRect = lockboxScrew.getBoundingClientRect();
+  const initialBounds = faceRect();
+  updateScrewPosition({
+    x: initialScrewRect.left - initialBounds.left,
+    y: initialScrewRect.top - initialBounds.top
+  });
+  window.addEventListener('resize', () => {
+    panelMaxOffset = lockboxBox.getBoundingClientRect().width * 0.18;
+    slotSnapThreshold = lockboxBox.getBoundingClientRect().width * 0.04;
+    setPanelOffset(panelOffset);
+  });
 }
 
 function setupInfoPopups() {
