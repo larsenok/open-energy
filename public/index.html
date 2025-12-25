@@ -53,6 +53,17 @@
         >
           Oslo daylight
         </button>
+        <button
+          class="tab"
+          type="button"
+          id="lockbox-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="lockbox-panel"
+          data-tab="lockbox"
+        >
+          Lockbox
+        </button>
       </nav>
       <main
         class="scene"
@@ -297,6 +308,31 @@
               </div>
             </div>
           </aside>
+        </div>
+      </section>
+      <section
+        class="lockbox-panel"
+        data-panel="lockbox"
+        id="lockbox-panel"
+        role="tabpanel"
+        aria-labelledby="lockbox-tab"
+        hidden
+      >
+        <div class="lockbox" id="lockbox-box">
+          <div class="lockbox-lid"></div>
+          <div class="lockbox-face">
+            <div class="lockbox-dial" id="lockbox-dial">
+              <div class="lockbox-dial-indicator"></div>
+              <div class="lockbox-dial-window" id="lockbox-dial-window">000</div>
+              <button class="lockbox-dial-center" id="lockbox-dial-center" type="button"></button>
+            </div>
+            <div class="lockbox-panel-slide" id="lockbox-panel-slide"></div>
+            <div class="lockbox-slot" id="lockbox-slot"></div>
+            <div class="lockbox-glass" id="lockbox-glass">
+              <div class="lockbox-code" id="lockbox-code">000</div>
+            </div>
+            <div class="lockbox-screw" id="lockbox-screw"></div>
+          </div>
         </div>
       </section>
     </div>
