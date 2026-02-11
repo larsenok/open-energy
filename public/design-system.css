@@ -1,0 +1,12 @@
+:root {
+  --ds-bg: #090c14;
+  --ds-surface: #0f172a;
+  --ds-surface-soft: rgba(9, 13, 24, 0.8);
+  --ds-text: #e5edf8;
+  --ds-muted: #a8bbd4;
+  --ds-accent: #38bdf8;
+  --ds-border: rgba(148, 163, 184, 0.24);
+  --ds-radius-lg: 20px;
+  --ds-radius-md: 16px;
+  --ds-shadow-soft: 0 12px 40px rgba(2, 6, 23, 0.35);
+}
