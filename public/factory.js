@@ -11,6 +11,7 @@ const FACTORY_PROCESSING = {
   copperOre: 'wire'
 };
 const FACTORY_SIMPLE_ITEMS = ['ironPlate', 'wire'];
+const FACTORY_STORAGE_KEY = 'oeFactoryProgress';
 
 export function setupFactoryBuilder(elements) {
   const {
@@ -34,13 +35,55 @@ export function setupFactoryBuilder(elements) {
 
   let factoryLevel = null;
   let factoryState = null;
+
+  function readProgress() {
+    try {
+      const raw = localStorage.getItem(FACTORY_STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  function saveProgress() {
+    if (!factoryState || !factoryLevel) return;
+    try {
+      localStorage.setItem(
+        FACTORY_STORAGE_KEY,
+        JSON.stringify({ level: factoryLevel, state: factoryState, placement: factoryPlacement, savedAt: Date.now() })
+      );
+    } catch {
+      // ignore
+    }
+  }
   let factoryInterval = null;
   const factoryPlacement = { tool: 'conveyor', direction: 'right' };
   const factoryCellElements = [];
 
   renderFactoryGrid();
   bindFactoryControls();
-  loadFactoryLevel(generateFactoryLevel());
+
+  const restored = readProgress();
+  if (restored?.level?.grid && restored?.state?.grid) {
+    factoryLevel = { grid: cloneFactoryGrid(restored.level.grid), target: { ...restored.level.target } };
+    factoryState = {
+      ...restored.state,
+      grid: cloneFactoryGrid(restored.state.grid),
+      target: { ...restored.state.target },
+      collectorCounts: { ...(restored.state.collectorCounts || {}) }
+    };
+    if (restored.placement?.tool) {
+      factoryPlacement.tool = restored.placement.tool;
+    }
+    if (restored.placement?.direction && FACTORY_DIRECTIONS.includes(restored.placement.direction)) {
+      factoryPlacement.direction = restored.placement.direction;
+      directionLabel.textContent = factoryPlacement.direction.replace(/^(\w)/, (m) => m.toUpperCase());
+    }
+    renderFactoryHud('Recovered your previous factory run.');
+  } else {
+    loadFactoryLevel(generateFactoryLevel());
+  }
 
   function bindFactoryControls() {
     toolButtons.forEach((button) => {
@@ -211,6 +254,7 @@ export function setupFactoryBuilder(elements) {
     tickEl.textContent = String(factoryState.tick);
     statusEl.textContent = statusOverride || statusEl.textContent || 'Ready.';
     renderCollectorCounts();
+    saveProgress();
   }
 
   function updateFactoryCells() {
@@ -519,6 +563,7 @@ export function setupFactoryBuilder(elements) {
       stopFactoryLoop();
       const parResult = factoryState.completedTick <= maxTicks ? 'You met the par pace.' : 'Over par, but victory nonetheless!';
       statusEl.textContent = `Victory! Delivered the target in ${factoryState.completedTick} ticks. ${parResult}`;
+      window.dispatchEvent(new CustomEvent('oe:factory-win'));
       return;
     }
     if (factoryState.tick > maxTicks && !factoryState.failed) {

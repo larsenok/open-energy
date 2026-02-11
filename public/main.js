@@ -101,15 +101,72 @@ let activeQuizEntries = QUIZ_GENERATIONS[activeQuizKey].entries;
 let quizPokemonById = new Map(activeQuizEntries.map((entry) => [entry.id, entry]));
 let quizGridOrder = activeQuizEntries.map((entry) => entry.id);
 const quizLookup = new Map();
+const validTabIds = new Set(tabButtons.map((button) => button.dataset.tab).filter(Boolean));
+
+const STORAGE_KEYS = {
+  stats: 'oePrototypeStats',
+  quiz: 'oeQuizProgress',
+  lockbox: 'oeLockboxState'
+};
+
+function readJsonStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore storage limits
+  }
+}
+
+function createDefaultStats() {
+  return {
+    views: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 },
+    totalViews: 0,
+    factoryWins: 0,
+    lockboxUnlocks: 0,
+    quizCompletions: 0,
+    cardClicks: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 }
+  };
+}
+
+function updatePrototypeStats(mutator) {
+  const current = readJsonStorage(STORAGE_KEYS.stats, createDefaultStats());
+  const merged = {
+    ...createDefaultStats(),
+    ...current,
+    views: { ...createDefaultStats().views, ...(current.views || {}) },
+    cardClicks: { ...createDefaultStats().cardClicks, ...(current.cardClicks || {}) }
+  };
+  mutator(merged);
+  writeJsonStorage(STORAGE_KEYS.stats, merged);
+}
+
+function getInitialTabId() {
+  const hashTab = window.location.hash.replace('#', '').trim();
+  return validTabIds.has(hashTab) ? hashTab : DEFAULT_TAB_ID;
+}
 
 if (tabButtons.length) {
   tabButtons.forEach((button) => {
     button.addEventListener('click', () => {
       const tabId = button.dataset.tab || DEFAULT_TAB_ID;
-      switchTab(tabId);
+      switchTab(tabId, { updateHash: true });
     });
   });
-  switchTab(DEFAULT_TAB_ID);
+  switchTab(getInitialTabId());
+  window.addEventListener('hashchange', () => {
+    const tabId = getInitialTabId();
+    switchTab(tabId);
+  });
 }
 
 if (daylightDial) {
@@ -140,6 +197,12 @@ setupFactoryBuilder({
 setupInfoPopups();
 setupQuiz();
 setupLockbox();
+
+window.addEventListener('oe:factory-win', () => {
+  updatePrototypeStats((stats) => {
+    stats.factoryWins = (stats.factoryWins || 0) + 1;
+  });
+});
 
 const energyRequest = fetch('data/energy.json').then((response) => {
   if (!response.ok) {
@@ -190,8 +253,11 @@ tooltipClose.addEventListener('click', () => {
   }
 });
 
-function switchTab(tabId) {
+function switchTab(tabId, { updateHash = false } = {}) {
   const target = tabId || DEFAULT_TAB_ID;
+  if (!validTabIds.has(target)) {
+    return;
+  }
   if (tabButtons.length) {
     tabButtons.forEach((button) => {
       const isActive = button.dataset.tab === target;
@@ -210,6 +276,15 @@ function switchTab(tabId) {
   }
   if (target === DAYLIGHT_TAB_ID) {
     updateDaylight();
+  }
+
+  updatePrototypeStats((stats) => {
+    stats.views[target] = (stats.views[target] || 0) + 1;
+    stats.totalViews = (stats.totalViews || 0) + 1;
+  });
+
+  if (updateHash && window.location.hash !== `#${target}`) {
+    window.location.hash = target;
   }
 }
 
@@ -231,6 +306,13 @@ function setupLockbox() {
   const targetCodeValue = 428;
   const targetCode = String(targetCodeValue).padStart(3, '0');
   lockboxCode.textContent = targetCode;
+
+  function saveLockboxState(payload) {
+    const next = { ...payload, savedAt: Date.now() };
+    writeJsonStorage(STORAGE_KEYS.lockbox, next);
+  }
+
+  const restoredLockbox = readJsonStorage(STORAGE_KEYS.lockbox, null);
 
   let dialAngle = 0;
   let dialPointerId = null;
@@ -270,6 +352,7 @@ function setupLockbox() {
     lockboxDialWindow.textContent = String(value).padStart(3, '0');
     panelUnlocked = value === targetCodeValue;
     lockboxBox.classList.toggle('panel-ready', panelUnlocked);
+    saveLockboxState({ dialAngle, panelOffset, screwPosition, panelUnlocked, slotExposed, unlocked: boxUnlocked });
   }
 
   function setPanelOffset(nextOffset) {
@@ -277,12 +360,14 @@ function setupLockbox() {
     lockboxPanelSlide.style.transform = `translateX(${panelOffset}px)`;
     slotExposed = panelOffset >= panelMaxOffset * 0.7;
     lockboxBox.classList.toggle('slot-exposed', slotExposed);
+    saveLockboxState({ dialAngle, panelOffset, screwPosition, panelUnlocked, slotExposed, unlocked: boxUnlocked });
   }
 
   function updateScrewPosition(position) {
     screwPosition = position;
     lockboxScrew.style.left = `${position.x}px`;
     lockboxScrew.style.top = `${position.y}px`;
+    saveLockboxState({ dialAngle, panelOffset, screwPosition, panelUnlocked, slotExposed, unlocked: boxUnlocked });
   }
 
   function maybeUnlock() {
@@ -331,7 +416,22 @@ function setupLockbox() {
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     const currentAngle = Math.atan2(event.clientY - center.y, event.clientX - center.x) * (180 / Math.PI);
     dialAngle = dialStartRotation + (currentAngle - dialStartAngle);
-    updateDial();
+    if (restoredLockbox) {
+    if (typeof restoredLockbox.dialAngle === 'number') {
+      dialAngle = restoredLockbox.dialAngle;
+    }
+    if (typeof restoredLockbox.panelOffset === 'number') {
+      panelOffset = Math.max(0, Math.min(panelMaxOffset, restoredLockbox.panelOffset));
+      slotExposed = panelOffset >= panelMaxOffset - slotSnapThreshold;
+    }
+    if (restoredLockbox.unlocked) {
+      boxUnlocked = true;
+      panelUnlocked = true;
+      lockboxBox.classList.add('is-unlocked');
+    }
+  }
+
+  updateDial();
   });
 
   lockboxDial.addEventListener('pointerup', (event) => {
@@ -355,7 +455,22 @@ function setupLockbox() {
       return;
     }
     dialAngle = normalizeAngle(Math.round(dialAngle / 9) * 9);
-    updateDial();
+    if (restoredLockbox) {
+    if (typeof restoredLockbox.dialAngle === 'number') {
+      dialAngle = restoredLockbox.dialAngle;
+    }
+    if (typeof restoredLockbox.panelOffset === 'number') {
+      panelOffset = Math.max(0, Math.min(panelMaxOffset, restoredLockbox.panelOffset));
+      slotExposed = panelOffset >= panelMaxOffset - slotSnapThreshold;
+    }
+    if (restoredLockbox.unlocked) {
+      boxUnlocked = true;
+      panelUnlocked = true;
+      lockboxBox.classList.add('is-unlocked');
+    }
+  }
+
+  updateDial();
   });
 
   lockboxGlass.addEventListener('pointerdown', () => {
@@ -465,6 +580,21 @@ function setupLockbox() {
     screwPointerId = null;
   });
 
+  if (restoredLockbox) {
+    if (typeof restoredLockbox.dialAngle === 'number') {
+      dialAngle = restoredLockbox.dialAngle;
+    }
+    if (typeof restoredLockbox.panelOffset === 'number') {
+      panelOffset = Math.max(0, Math.min(panelMaxOffset, restoredLockbox.panelOffset));
+      slotExposed = panelOffset >= panelMaxOffset - slotSnapThreshold;
+    }
+    if (restoredLockbox.unlocked) {
+      boxUnlocked = true;
+      panelUnlocked = true;
+      lockboxBox.classList.add('is-unlocked');
+    }
+  }
+
   updateDial();
   const initialScrewRect = lockboxScrew.getBoundingClientRect();
   const initialBounds = faceRect();
@@ -522,11 +652,35 @@ function setupInfoPopups() {
   });
 }
 
+
+function loadQuizProgress() {
+  return readJsonStorage(STORAGE_KEYS.quiz, {
+    activeQuizKey,
+    foundByGeneration: {}
+  });
+}
+
+function saveQuizProgress() {
+  const progress = loadQuizProgress();
+  progress.activeQuizKey = activeQuizKey;
+  progress.foundByGeneration = progress.foundByGeneration || {};
+  progress.foundByGeneration[activeQuizKey] = Array.from(quizFound.values());
+  writeJsonStorage(STORAGE_KEYS.quiz, progress);
+}
+
 function setupQuiz() {
   if (!quizGridEl || !quizInputEl || !quizFeedbackEl) return;
 
-  const defaultGeneration = quizGenerationEl?.value || activeQuizKey;
+  const quizProgress = loadQuizProgress();
+  const defaultGeneration = quizProgress.activeQuizKey || quizGenerationEl?.value || activeQuizKey;
   applyQuizGeneration(defaultGeneration);
+  const recovered = quizProgress.foundByGeneration?.[activeQuizKey];
+  if (Array.isArray(recovered) && recovered.length) {
+    recovered.forEach((id) => quizFound.add(id));
+    renderQuizGrid();
+    updateQuizStats();
+    setQuizFeedback('Recovered saved Pokédex progress.', 'info');
+  }
 
   quizInputEl.addEventListener('input', handleQuizAutoCheck);
   quizInputEl.addEventListener('keydown', (event) => {
@@ -557,6 +711,7 @@ function applyQuizGeneration(generationKey, { announce = false } = {}) {
   stopQuizTimer();
   updateQuizTimerDisplay(0);
   if (quizTotalEl) quizTotalEl.textContent = String(activeQuizEntries.length);
+  saveQuizProgress();
   if (announce) {
     setQuizFeedback(`Region switched to ${generation.label}.`, 'info');
   } else {
@@ -621,10 +776,14 @@ function handleQuizSubmit() {
   quizFound.add(pokemonId);
   revealQuizEntry(pokemonId);
   updateQuizStats();
+  saveQuizProgress();
   setQuizFeedback(`${quizPokemonById.get(pokemonId).name}!`, 'success');
 
   if (quizFound.size === activeQuizEntries.length) {
     setQuizFeedback('Pokédex complete! Legendary memory unlocked.', 'success');
+    updatePrototypeStats((stats) => {
+      stats.quizCompletions = (stats.quizCompletions || 0) + 1;
+    });
     stopQuizTimer();
   }
 }
@@ -681,6 +840,7 @@ function resetQuiz() {
   stopQuizTimer();
   quizStartTime = null;
   updateQuizTimerDisplay(0);
+  saveQuizProgress();
 }
 
 function startQuizTimer() {
@@ -1072,40 +1232,32 @@ function updateDaylight() {
   const sunsetSeconds = toSeconds(sunsetParts);
   const nowSeconds = toSeconds({ hours: zonedNow.hours, minutes: zonedNow.minutes, seconds: zonedNow.seconds });
   const secondsInDay = 24 * 60 * 60;
-  const secondsOnDial = 12 * 60 * 60;
 
   const daylightSeconds = Math.max(0, Math.round((sunTimes.sunset - sunTimes.sunrise) / 1000));
   daylightLengthEl.textContent = formatDuration(daylightSeconds);
 
   const normalizeSeconds = (value) => ((value % secondsInDay) + secondsInDay) % secondsInDay;
-  const toDialAngle = (value) => (value / secondsOnDial) * 360;
-  const ensureForwardProgress = (angle, previous) => {
-    let result = angle;
-    while (result < previous) {
-      result += 360;
-    }
-    return result;
-  };
+  const toDialAngle = (value) => Number(((normalizeSeconds(value) / secondsInDay) * 360).toFixed(4));
 
   const sunriseSecondsNormalized = normalizeSeconds(sunriseSeconds);
-  let sunsetSecondsAdjusted = normalizeSeconds(sunsetSeconds);
-  if (sunsetSecondsAdjusted <= sunriseSecondsNormalized) {
-    sunsetSecondsAdjusted += secondsInDay;
+  const sunsetSecondsNormalized = normalizeSeconds(sunsetSeconds);
+  const nowSecondsNormalized = normalizeSeconds(nowSeconds);
+
+  let sunriseArcEnd = sunriseSecondsNormalized;
+  let sunsetArcStart = sunsetSecondsNormalized;
+  if (sunsetArcStart < sunriseArcEnd) {
+    sunsetArcStart += secondsInDay;
   }
 
-  const transitionSeconds = Math.min(3600, Math.max(0, daylightSeconds / 2));
-  const sunriseTransitionEndSeconds = Math.min(sunsetSecondsAdjusted, sunriseSecondsNormalized + transitionSeconds);
-  const sunsetTransitionStartSeconds = Math.max(sunriseSecondsNormalized, sunsetSecondsAdjusted - transitionSeconds);
+  const transitionSeconds = Math.min(3600, Math.max(300, Math.round(daylightSeconds * 0.08)));
+  const sunriseTransitionEndSeconds = Math.min(sunsetArcStart, sunriseArcEnd + transitionSeconds);
+  const sunsetTransitionStartSeconds = Math.max(sunriseArcEnd, sunsetArcStart - transitionSeconds);
 
-  const sunriseAngle = toDialAngle(sunriseSecondsNormalized);
-  const sunriseTransitionEndAngle = ensureForwardProgress(toDialAngle(sunriseTransitionEndSeconds), sunriseAngle);
-  const sunsetTransitionStartAngle = ensureForwardProgress(toDialAngle(sunsetTransitionStartSeconds), sunriseTransitionEndAngle);
-  const sunsetAngle = ensureForwardProgress(toDialAngle(sunsetSecondsAdjusted), sunsetTransitionStartAngle);
-
-  let nowAngle = toDialAngle(normalizeSeconds(nowSeconds));
-  if (sunsetAngle > 360 && nowAngle < sunriseAngle) {
-    nowAngle += 360;
-  }
+  const sunriseAngle = toDialAngle(sunriseArcEnd);
+  const sunriseTransitionEndAngle = toDialAngle(sunriseTransitionEndSeconds);
+  const sunsetTransitionStartAngle = toDialAngle(sunsetTransitionStartSeconds);
+  const sunsetAngle = toDialAngle(sunsetArcStart);
+  const nowAngle = toDialAngle(nowSecondsNormalized);
 
   daylightDial.style.setProperty('--daylight-start', `${sunriseAngle}deg`);
   daylightDial.style.setProperty('--sunrise-end', `${sunriseTransitionEndAngle}deg`);
@@ -1114,9 +1266,9 @@ function updateDaylight() {
   daylightDial.style.setProperty('--sun-angle', `${nowAngle}deg`);
 
   const skyColors = resolveDialSkyColors({
-    nowSeconds,
-    sunriseSeconds: sunriseSecondsNormalized,
-    sunsetSeconds: sunsetSecondsAdjusted,
+    nowSeconds: nowSecondsNormalized,
+    sunriseSeconds: sunriseArcEnd,
+    sunsetSeconds: sunsetArcStart,
     secondsInDay
   });
 
