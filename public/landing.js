@@ -24,12 +24,12 @@ function writeJson(key, value) {
 
 function emptyStats() {
   return {
-    views: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 },
+    views: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0, japanese: 0 },
     totalViews: 0,
     factoryWins: 0,
     lockboxUnlocks: 0,
     quizCompletions: 0,
-    cardClicks: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 }
+    cardClicks: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0, japanese: 0 }
   };
 }
 
