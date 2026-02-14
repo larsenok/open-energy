@@ -56,6 +56,16 @@ const lockboxCode = document.getElementById('lockbox-code');
 const lockboxPanelSlide = document.getElementById('lockbox-panel-slide');
 const lockboxSlot = document.getElementById('lockbox-slot');
 const lockboxScrew = document.getElementById('lockbox-screw');
+const jpPhraseNativeEl = document.getElementById('jp-phrase-native');
+const jpPhraseRomajiEl = document.getElementById('jp-phrase-romaji');
+const jpPhraseMeaningEl = document.getElementById('jp-phrase-meaning');
+const jpNextPhraseBtn = document.getElementById('jp-next-phrase');
+const jpKanaSymbolEl = document.getElementById('jp-kana-symbol');
+const jpKanaInputEl = document.getElementById('jp-kana-input');
+const jpKanaFeedbackEl = document.getElementById('jp-kana-feedback');
+const jpQuizPromptEl = document.getElementById('jp-quiz-prompt');
+const jpQuizOptionsEl = document.getElementById('jp-quiz-options');
+const jpQuizFeedbackEl = document.getElementById('jp-quiz-feedback');
 
 let activeRegionId = null;
 let regions = [];
@@ -64,6 +74,7 @@ let tooltipAnchor = null;
 const BREATHING_SPEED = 4000;
 const DEFAULT_TAB_ID = 'quiz';
 const DAYLIGHT_TAB_ID = 'daylight';
+const JAPANESE_TAB_ID = 'japanese';
 const OSLO_COORDS = { latitude: 59.9139, longitude: 10.7522 };
 const OSLO_TIME_ZONE = 'Europe/Oslo';
 const DAYLIGHT_REFRESH_INTERVAL = 1000;
@@ -129,12 +140,12 @@ function writeJsonStorage(key, value) {
 
 function createDefaultStats() {
   return {
-    views: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 },
+    views: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0, japanese: 0 },
     totalViews: 0,
     factoryWins: 0,
     lockboxUnlocks: 0,
     quizCompletions: 0,
-    cardClicks: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0 }
+    cardClicks: { quiz: 0, factory: 0, grid: 0, daylight: 0, lockbox: 0, japanese: 0 }
   };
 }
 
@@ -197,6 +208,7 @@ setupFactoryBuilder({
 setupInfoPopups();
 setupQuiz();
 setupLockbox();
+setupJapaneseTrainer();
 
 window.addEventListener('oe:factory-win', () => {
   updatePrototypeStats((stats) => {
@@ -277,6 +289,9 @@ function switchTab(tabId, { updateHash = false } = {}) {
   if (target === DAYLIGHT_TAB_ID) {
     updateDaylight();
   }
+  if (target === JAPANESE_TAB_ID && jpKanaInputEl) {
+    window.setTimeout(() => jpKanaInputEl.focus(), 40);
+  }
 
   updatePrototypeStats((stats) => {
     stats.views[target] = (stats.views[target] || 0) + 1;
@@ -287,6 +302,151 @@ function switchTab(tabId, { updateHash = false } = {}) {
     window.location.hash = target;
   }
 }
+
+function setupJapaneseTrainer() {
+  if (
+    !jpPhraseNativeEl ||
+    !jpPhraseRomajiEl ||
+    !jpPhraseMeaningEl ||
+    !jpNextPhraseBtn ||
+    !jpKanaSymbolEl ||
+    !jpKanaInputEl ||
+    !jpKanaFeedbackEl ||
+    !jpQuizPromptEl ||
+    !jpQuizOptionsEl ||
+    !jpQuizFeedbackEl
+  ) {
+    return;
+  }
+
+  const phrases = [
+    { native: 'こんにちは', romaji: 'Konnichiwa', meaning: 'Hello / Good afternoon' },
+    { native: 'おはよう', romaji: 'Ohayou', meaning: 'Good morning' },
+    { native: 'こんばんは', romaji: 'Konbanwa', meaning: 'Good evening' },
+    { native: 'ありがとう', romaji: 'Arigatou', meaning: 'Thank you' },
+    { native: 'すみません', romaji: 'Sumimasen', meaning: 'Excuse me / Sorry' },
+    { native: 'だいじょうぶです', romaji: 'Daijoubu desu', meaning: 'I am okay' },
+    { native: 'お願いします', romaji: 'Onegaishimasu', meaning: 'Please' },
+    { native: 'どこですか', romaji: 'Doko desu ka', meaning: 'Where is it?' }
+  ];
+
+  const kanaDeck = [
+    { kana: 'あ', romaji: 'a' },
+    { kana: 'い', romaji: 'i' },
+    { kana: 'う', romaji: 'u' },
+    { kana: 'え', romaji: 'e' },
+    { kana: 'お', romaji: 'o' },
+    { kana: 'か', romaji: 'ka' },
+    { kana: 'き', romaji: 'ki' },
+    { kana: 'く', romaji: 'ku' },
+    { kana: 'け', romaji: 'ke' },
+    { kana: 'こ', romaji: 'ko' },
+    { kana: 'さ', romaji: 'sa' },
+    { kana: 'し', romaji: 'shi' },
+    { kana: 'す', romaji: 'su' },
+    { kana: 'せ', romaji: 'se' },
+    { kana: 'そ', romaji: 'so' }
+  ];
+
+  const phraseQuiz = [
+    {
+      prompt: 'What does “ありがとう” mean?',
+      options: ['Thank you', 'Good night', 'Excuse me'],
+      answer: 'Thank you'
+    },
+    {
+      prompt: 'What does “すみません” mean?',
+      options: ['I do not know', 'Excuse me / Sorry', 'See you later'],
+      answer: 'Excuse me / Sorry'
+    },
+    {
+      prompt: 'What does “おはよう” mean?',
+      options: ['Good morning', 'Good evening', 'Nice to meet you'],
+      answer: 'Good morning'
+    },
+    {
+      prompt: 'What does “お願いします” mean?',
+      options: ['Please', 'Stop', 'Let us go'],
+      answer: 'Please'
+    }
+  ];
+
+  let phraseIndex = 0;
+  let kanaCurrent = kanaDeck[0];
+  let quizIndex = 0;
+
+  function renderPhrase() {
+    const phrase = phrases[phraseIndex];
+    jpPhraseNativeEl.textContent = phrase.native;
+    jpPhraseRomajiEl.textContent = phrase.romaji;
+    jpPhraseMeaningEl.textContent = phrase.meaning;
+  }
+
+  function nextPhrase() {
+    phraseIndex = (phraseIndex + 1) % phrases.length;
+    renderPhrase();
+  }
+
+  function pickKana() {
+    const next = kanaDeck[Math.floor(Math.random() * kanaDeck.length)];
+    kanaCurrent = next;
+    jpKanaSymbolEl.textContent = next.kana;
+  }
+
+  function gradeKanaAnswer() {
+    const guess = jpKanaInputEl.value.trim().toLowerCase();
+    if (!guess) {
+      jpKanaFeedbackEl.textContent = 'Type a romaji answer to check.';
+      return;
+    }
+
+    if (guess === kanaCurrent.romaji) {
+      jpKanaFeedbackEl.textContent = `Correct — ${kanaCurrent.kana} is “${kanaCurrent.romaji}”.`;
+      jpKanaFeedbackEl.dataset.state = 'good';
+      jpKanaInputEl.value = '';
+      pickKana();
+      return;
+    }
+
+    jpKanaFeedbackEl.textContent = `Not yet. ${kanaCurrent.kana} is “${kanaCurrent.romaji}”. Try another one.`;
+    jpKanaFeedbackEl.dataset.state = 'bad';
+  }
+
+  function renderPhraseQuiz() {
+    const round = phraseQuiz[quizIndex];
+    jpQuizPromptEl.textContent = round.prompt;
+    jpQuizOptionsEl.innerHTML = '';
+
+    round.options.forEach((option) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = option;
+      button.addEventListener('click', () => {
+        const isCorrect = option === round.answer;
+        jpQuizFeedbackEl.textContent = isCorrect
+          ? 'Nice! Correct answer.'
+          : `Not quite. Correct answer: ${round.answer}.`;
+        jpQuizFeedbackEl.dataset.state = isCorrect ? 'good' : 'bad';
+        quizIndex = (quizIndex + 1) % phraseQuiz.length;
+        window.setTimeout(renderPhraseQuiz, 650);
+      });
+      jpQuizOptionsEl.appendChild(button);
+    });
+  }
+
+  jpNextPhraseBtn.addEventListener('click', nextPhrase);
+  jpKanaInputEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      gradeKanaAnswer();
+    }
+  });
+
+  renderPhrase();
+  pickKana();
+  renderPhraseQuiz();
+}
+
 
 function setupLockbox() {
   if (

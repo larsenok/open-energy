@@ -65,6 +65,17 @@
         >
           Lockbox
         </button>
+        <button
+          class="tab"
+          type="button"
+          id="japanese-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="japanese-panel"
+          data-tab="japanese"
+        >
+          Japanese
+        </button>
       </nav>
       <main
         class="scene"
@@ -309,6 +320,45 @@
               </div>
             </div>
           </aside>
+        </div>
+      </section>
+      <section
+        class="japanese-panel"
+        data-panel="japanese"
+        id="japanese-panel"
+        role="tabpanel"
+        aria-labelledby="japanese-tab"
+        hidden
+      >
+        <div class="japanese-shell">
+          <header class="japanese-header">
+            <p class="eyebrow">Language dojo</p>
+            <h2>Japanese sprint trainer</h2>
+            <p>Learn practical Japanese through quick cards, kana memory, and phrase drills.</p>
+          </header>
+          <section class="japanese-card" aria-label="Daily phrase">
+            <p class="label">Daily phrase</p>
+            <p class="japanese-phrase" id="jp-phrase-native">こんにちは</p>
+            <p class="japanese-romaji" id="jp-phrase-romaji">Konnichiwa</p>
+            <p class="japanese-meaning" id="jp-phrase-meaning">Hello / Good afternoon</p>
+            <button type="button" id="jp-next-phrase">New phrase</button>
+          </section>
+          <section class="japanese-grid" aria-label="Japanese learning modules">
+            <article class="japanese-card kana-card">
+              <h3>Kana challenge</h3>
+              <p>Type the romaji for this kana:</p>
+              <p class="kana-symbol" id="jp-kana-symbol">あ</p>
+              <label class="sr-only" for="jp-kana-input">Kana answer</label>
+              <input id="jp-kana-input" type="text" placeholder="romaji" autocomplete="off" />
+              <p class="kana-feedback" id="jp-kana-feedback">Start with simple vowels and build speed.</p>
+            </article>
+            <article class="japanese-card quiz-card">
+              <h3>Phrase match</h3>
+              <p class="quiz-prompt" id="jp-quiz-prompt">What does “ありがとう” mean?</p>
+              <div class="jp-quiz-options" id="jp-quiz-options"></div>
+              <p class="kana-feedback" id="jp-quiz-feedback">Pick the best translation.</p>
+            </article>
+          </section>
         </div>
       </section>
       <section
